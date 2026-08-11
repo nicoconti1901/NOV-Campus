@@ -54,19 +54,133 @@ body {
   animation: fade-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-@keyframes campus-kenburns {
-  from {
-    transform: scale(1.05);
-  }
-  to {
-    transform: scale(1.12);
-  }
-}
-
-.animate-campus-kenburns {
-  animation: campus-kenburns 8s ease-out forwards;
-}
-
 .font-display {
   font-family: var(--font-display);
+}
+
+/* Educator mascot — vector loop (Lottie-style) */
+@keyframes educator-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes educator-shadow {
+  0%,
+  100% {
+    transform: scaleX(1);
+    opacity: 0.35;
+  }
+  50% {
+    transform: scaleX(0.82);
+    opacity: 0.2;
+  }
+}
+
+@keyframes educator-head {
+  0%,
+  100% {
+    transform: rotate(-2deg);
+  }
+  50% {
+    transform: rotate(3deg);
+  }
+}
+
+@keyframes educator-arm-right {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(-6deg);
+  }
+}
+
+@keyframes educator-arm-left {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(5deg);
+  }
+}
+
+@keyframes educator-book {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-4deg);
+  }
+  50% {
+    transform: translateY(-5px) rotate(4deg);
+  }
+}
+
+@keyframes educator-blink {
+  0%,
+  92%,
+  100% {
+    transform: scaleY(1);
+  }
+  96% {
+    transform: scaleY(0.1);
+  }
+}
+
+.educator-body {
+  animation: educator-bob 3.2s ease-in-out infinite;
+  transform-box: fill-box;
+}
+
+.educator-shadow {
+  animation: educator-shadow 3.2s ease-in-out infinite;
+  transform-origin: center;
+  transform-box: fill-box;
+}
+
+.educator-arm-right {
+  animation: educator-arm-right 3.4s ease-in-out infinite;
+  transform-origin: 122px 132px;
+  transform-box: view-box;
+}
+
+.educator-arm-left {
+  animation: educator-arm-left 3.6s ease-in-out infinite;
+  transform-origin: 78px 132px;
+  transform-box: view-box;
+}
+
+.educator-head {
+  animation: educator-head 4s ease-in-out infinite;
+  transform-origin: 100px 78px;
+  transform-box: view-box;
+}
+
+.educator-book {
+  animation: educator-book 2.8s ease-in-out infinite;
+  transform-origin: 51px 161px;
+  transform-box: view-box;
+}
+
+.educator-eyes {
+  animation: educator-blink 4.5s ease-in-out infinite;
+  transform-origin: center;
+  transform-box: fill-box;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .educator-body,
+  .educator-shadow,
+  .educator-head,
+  .educator-arm-right,
+  .educator-arm-left,
+  .educator-book,
+  .educator-eyes {
+    animation: none;
+  }
 }
