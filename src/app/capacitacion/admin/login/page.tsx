@@ -42,7 +42,7 @@ export default function AdminLoginPage() {
           <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-brand-orange/20 text-brand-orange">
             <Shield className="h-6 w-6" />
           </div>
-          <h1 className="font-display text-xl font-semibold uppercase tracking-[0.08em]">Administración</h1>
+          <h1 className="font-display text-xl font-semibold uppercase tracking-[0.08em]">Capacitadores</h1>
           <p className="mt-1 text-sm text-white/70">{siteConfig.tagline}</p>
         </div>
 

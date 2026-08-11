@@ -23,7 +23,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <CapacitacionBackground>
       <CampusNav
-        subtitle="Administración"
+        subtitle="Capacitadores"
         title="Casino Club Campus"
         titleHref="/capacitacion/admin"
         logoutEndpoint="/api/auth/admin/logout"

@@ -48,7 +48,7 @@ export default async function AdminDashboardPage() {
       <div className="overflow-hidden rounded-3xl bg-white/90 shadow-xl ring-1 ring-white/60 backdrop-blur-sm">
         <div className="bg-gradient-to-br from-brand-red to-brand-red-dark p-6 text-white sm:p-8">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/70">
-            Administración
+            Capacitadores
           </p>
           <h2 className="mt-2 text-2xl font-bold sm:text-3xl">Panel general</h2>
           <p className="mt-2 max-w-xl text-white/85">
