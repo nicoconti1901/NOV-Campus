@@ -193,27 +193,30 @@ export function TrainingForm({ rooms, initial }: Props) {
     }
   }
 
+  const fieldClass =
+    "w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-brand-dark caret-brand-dark outline-none placeholder:text-brand-gray-light focus:border-brand-orange focus:ring-2 focus:ring-brand-orange/20";
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-8">
+    <form onSubmit={handleSubmit} className="space-y-8 text-brand-dark">
       <section className="rounded-xl bg-white p-6 shadow-sm">
         <h3 className="font-bold text-brand-dark">Datos generales</h3>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <div className="sm:col-span-2">
-            <label className="mb-1 block text-sm font-medium">Título</label>
+            <label className="mb-1 block text-sm font-medium text-brand-dark">Título</label>
             <input
               required
               value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
-              className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-brand-red"
+              className={fieldClass}
             />
           </div>
           <div className="sm:col-span-2">
-            <label className="mb-1 block text-sm font-medium">Descripción</label>
+            <label className="mb-1 block text-sm font-medium text-brand-dark">Descripción</label>
             <textarea
               rows={3}
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
-              className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-brand-red"
+              className={fieldClass}
             />
           </div>
 
@@ -267,12 +270,12 @@ export function TrainingForm({ rooms, initial }: Props) {
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium">Sala</label>
+            <label className="mb-1 block text-sm font-medium text-brand-dark">Sala</label>
             <select
               required
               value={form.roomId}
               onChange={(e) => setForm({ ...form, roomId: e.target.value })}
-              className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-brand-red"
+              className={fieldClass}
             >
               {rooms.map((r) => (
                 <option key={r.id} value={r.id}>
@@ -282,7 +285,9 @@ export function TrainingForm({ rooms, initial }: Props) {
             </select>
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium">Puntaje mínimo de aprobación (%)</label>
+            <label className="mb-1 block text-sm font-medium text-brand-dark">
+              Puntaje mínimo de aprobación (%)
+            </label>
             <input
               type="number"
               min={1}
@@ -290,10 +295,10 @@ export function TrainingForm({ rooms, initial }: Props) {
               required
               value={form.minPassScore}
               onChange={(e) => setForm({ ...form, minPassScore: Number(e.target.value) })}
-              className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-brand-red"
+              className={fieldClass}
             />
           </div>
-          <label className="flex items-center gap-2 text-sm sm:col-span-2">
+          <label className="flex items-center gap-2 text-sm text-brand-dark sm:col-span-2">
             <input
               type="checkbox"
               checked={form.published}
@@ -392,7 +397,7 @@ export function TrainingForm({ rooms, initial }: Props) {
                     questions[qi] = { ...q, text: e.target.value };
                     setForm({ ...form, questions });
                   }}
-                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-brand-red"
+                  className={fieldClass}
                 />
                 {form.questions.length > 1 && (
                   <button
@@ -433,7 +438,7 @@ export function TrainingForm({ rooms, initial }: Props) {
                         questions[qi] = { ...q, options };
                         setForm({ ...form, questions });
                       }}
-                      className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-brand-red"
+                      className={fieldClass}
                     />
                     {q.options.length > 2 && (
                       <button

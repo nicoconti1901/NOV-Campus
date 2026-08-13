@@ -114,7 +114,7 @@ export function RoomsManager() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Ej: Medio Ambiente"
-                className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-brand-red focus:ring-2 focus:ring-brand-red/20"
+                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-brand-dark caret-brand-dark outline-none placeholder:text-brand-gray-light focus:border-brand-red focus:ring-2 focus:ring-brand-red/20"
               />
             </div>
             <div>
@@ -125,7 +125,7 @@ export function RoomsManager() {
                 value={slug}
                 onChange={(e) => setSlug(e.target.value)}
                 placeholder="Se genera solo si lo dejás vacío"
-                className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-brand-red focus:ring-2 focus:ring-brand-red/20"
+                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-brand-dark caret-brand-dark outline-none placeholder:text-brand-gray-light focus:border-brand-red focus:ring-2 focus:ring-brand-red/20"
               />
             </div>
           </div>

@@ -68,7 +68,7 @@ export function CampusLoginForm({ accessKey }: Props) {
                 inputMode="numeric"
                 value={dni}
                 onChange={(e) => setDni(e.target.value)}
-                className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white outline-none transition-colors placeholder:text-white/35 focus:border-brand-orange focus:ring-2 focus:ring-brand-orange/20"
+                className="w-full rounded-xl border border-white/20 bg-white px-4 py-3 text-sm text-brand-dark caret-brand-dark outline-none transition-colors placeholder:text-brand-gray-light focus:border-brand-orange focus:ring-2 focus:ring-brand-orange/20"
                 placeholder="Ej: 30123456"
               />
             </div>

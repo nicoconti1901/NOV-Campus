@@ -24,6 +24,22 @@ body {
   color: #ffffff;
 }
 
+/*
+ * Fuera de @layer para ganar a la herencia del body (color blanco).
+ * Los logins oscuros ya usan bg-white + text-brand-dark.
+ */
+input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]),
+textarea,
+select {
+  color: #12121a !important;
+  caret-color: #12121a !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #8a8a96 !important;
+}
+
 @keyframes slide-down-fade {
   from {
     opacity: 0;

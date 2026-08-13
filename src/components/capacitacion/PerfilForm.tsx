@@ -3,6 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
+const fieldClass =
+  "w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-brand-dark caret-brand-dark outline-none placeholder:text-brand-gray-light focus:border-brand-orange focus:ring-2 focus:ring-brand-orange/20";
+
 export function PerfilForm() {
   const router = useRouter();
   const [form, setForm] = useState({
@@ -37,7 +40,7 @@ export function PerfilForm() {
   }
 
   return (
-    <div className="mx-auto max-w-lg rounded-2xl bg-white p-8 shadow-sm">
+    <div className="mx-auto max-w-lg rounded-2xl bg-white p-8 text-brand-dark shadow-sm">
       <h2 className="text-2xl font-bold text-brand-dark">Completá tu perfil</h2>
       <p className="mt-2 text-sm text-brand-gray">
         Por única vez, necesitamos tus datos personales para certificar tus capacitaciones.
@@ -46,54 +49,54 @@ export function PerfilForm() {
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="mb-1 block text-sm font-medium">Nombre</label>
+            <label className="mb-1 block text-sm font-medium text-brand-dark">Nombre</label>
             <input
               required
               value={form.firstName}
               onChange={(e) => setForm({ ...form, firstName: e.target.value })}
-              className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-brand-red"
+              className={fieldClass}
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium">Apellido</label>
+            <label className="mb-1 block text-sm font-medium text-brand-dark">Apellido</label>
             <input
               required
               value={form.lastName}
               onChange={(e) => setForm({ ...form, lastName: e.target.value })}
-              className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-brand-red"
+              className={fieldClass}
             />
           </div>
         </div>
         <div>
-          <label className="mb-1 block text-sm font-medium">Email</label>
+          <label className="mb-1 block text-sm font-medium text-brand-dark">Email</label>
           <input
             type="email"
             value={form.email}
             onChange={(e) => setForm({ ...form, email: e.target.value })}
-            className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-brand-red"
+            className={fieldClass}
           />
         </div>
         <div>
-          <label className="mb-1 block text-sm font-medium">Teléfono</label>
+          <label className="mb-1 block text-sm font-medium text-brand-dark">Teléfono</label>
           <input
             value={form.phone}
             onChange={(e) => setForm({ ...form, phone: e.target.value })}
-            className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-brand-red"
+            className={fieldClass}
           />
         </div>
         <div>
-          <label className="mb-1 block text-sm font-medium">Empresa</label>
+          <label className="mb-1 block text-sm font-medium text-brand-dark">Empresa</label>
           <input
             value={form.company}
             onChange={(e) => setForm({ ...form, company: e.target.value })}
-            className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-brand-red"
+            className={fieldClass}
           />
         </div>
         {error && <p className="text-sm text-brand-red">{error}</p>}
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-lg bg-brand-red py-3 text-sm font-semibold text-white hover:bg-brand-red-dark disabled:opacity-60"
+          className="w-full rounded-lg bg-brand-orange py-3 text-sm font-semibold text-brand-black hover:bg-brand-orange-dark disabled:opacity-60"
         >
           {loading ? "Guardando..." : "Continuar al campus"}
         </button>
