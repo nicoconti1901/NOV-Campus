@@ -1,6 +1,6 @@
-# Casino Club — Campus de Capacitación
+# NOV — Campus de Capacitación
 
-Plataforma de capacitación corporativa para **Casino Club**.
+Plataforma de capacitación corporativa para **NOV**.
 
 Portal privado para participantes (acceso por DNI) y panel de administración para salas, cursos, evaluaciones y certificados.
 
@@ -19,23 +19,38 @@ Portal privado para participantes (acceso por DNI) y panel de administración pa
 
 ---
 
+## Identidad visual
+
+Paleta tomada del logo NOV (`public/images/logo.jpeg`):
+
+| Token | Hex | Uso |
+|---|---|---|
+| Rojo NOV | `#ED3229` | Botones, acentos, estados activos |
+| Gris NOV | `#61666E` | Textos, módulo de capacitadores |
+| Carbón | `#1E2126` | Fondos de portal y nav |
+| Blanco | `#FFFFFF` | Superficies y logo |
+
+El logo se muestra completo (horizontal) en header, home, logins y certificados PDF.
+
+---
+
 ## Fases del proyecto
 
 ### Fase 1 — Núcleo del campus
 - Acceso privado de participantes por DNI.
-- Panel de administración.
+- Panel de administración (Capacitadores).
 - Salas, capacitaciones, materiales y evaluaciones.
 - Certificados PDF al aprobar.
 
-### Fase 2 — Identidad Casino Club
-- Marca visual: negro / navy `#11111d` / acento naranja `#FF8C00`.
-- Logo Casino Club.
-- Portal de acceso, nav y footer corporativo (+18).
+### Fase 2 — Base de datos NOV
+- Misma estructura de campos que el campus original.
+- SQLite propio: `prisma/NOV-db.db` (`DATABASE_URL="file:./NOV-db.db"`).
+- El archivo `.db` no se versiona: cada entorno lo genera con migraciones + seed.
 
-### Fase 3 — Experiencia del home
-- Fondo con rotación de imágenes de casino.
-- Overlay oscuro para mantener legibilidad.
-- Cards y hero sobre capas semitransparentes.
+### Fase 3 — Identidad NOV
+- Marca visual rojo / gris / carbón.
+- Logo NOV en portal, navegación, logins y certificados.
+- Home con fondo corporativo (sin piezas de la marca anterior).
 
 ### Fase 4 — Operación
 - Alta de DNIs (individual o importación).
@@ -49,8 +64,8 @@ Portal privado para participantes (acceso por DNI) y panel de administración pa
 ### 1. Clonar e instalar
 
 ```bash
-git clone https://github.com/nicoconti1901/casinoclub-campus.git
-cd casinoclub-campus
+git clone https://github.com/nicoconti1901/NOV-Campus.git
+cd NOV-Campus
 npm install
 ```
 
@@ -63,15 +78,15 @@ cp .env.example .env
 Editá `.env`:
 
 ```env
-DATABASE_URL="file:./casino-club.db"
+DATABASE_URL="file:./NOV-db.db"
 SESSION_SECRET="un-secreto-largo-de-al-menos-32-caracteres"
 CAMPUS_ACCESS_KEY="tu-clave-privada"
-ADMIN_EMAIL="admin@casinoclub.com"
+ADMIN_EMAIL="admin@nov.com"
 ADMIN_PASSWORD="tu-password-seguro"
 ```
 
 > Prisma resuelve rutas SQLite relativas desde la carpeta `prisma/`.  
-> Con `file:./casino-club.db` el archivo queda en `prisma/casino-club.db`.
+> Con `file:./NOV-db.db` el archivo queda en `prisma/NOV-db.db`.
 
 ### 3. Base de datos
 
@@ -97,7 +112,7 @@ Abrí [http://localhost:3000](http://localhost:3000) → redirige a `/capacitaci
 |---|---|---|
 | Portal | `/capacitacion` | — |
 | Participantes | `/capacitacion/<CAMPUS_ACCESS_KEY>` | DNI habilitado por admin |
-| Administración | `/capacitacion/admin/login` | `ADMIN_EMAIL` / `ADMIN_PASSWORD` |
+| Capacitadores | `/capacitacion/admin/login` | `ADMIN_EMAIL` / `ADMIN_PASSWORD` |
 
 ---
 
@@ -129,6 +144,7 @@ Abrí [http://localhost:3000](http://localhost:3000) → redirige a `/capacitaci
 | `npm run db:setup` | Migrar + seed (primera vez) |
 | `npm run db:migrate` | Nueva migración en desarrollo |
 | `npm run db:seed` | Solo seed |
+| `npx tsx scripts/generar-propuesta-pdf.ts` | Genera el PDF de la propuesta comercial |
 
 ---
 
@@ -138,9 +154,20 @@ Abrí [http://localhost:3000](http://localhost:3000) → redirige a `/capacitaci
 src/app/capacitacion/          # Portal, campus alumno y admin
 src/components/capacitacion/   # UI del campus (logo, nav, footer, backdrop…)
 src/lib/capacitacion/          # Auth, salas, certificados, uploads
-prisma/                        # Schema, migraciones, SQLite
-public/images/                 # Logo e imágenes del home
+prisma/                        # Schema, migraciones, SQLite (NOV-db.db)
+public/images/                 # Logo NOV y recursos visuales
+docs/                          # Propuesta comercial (PDF)
+scripts/                       # Generador de la propuesta en PDF
 ```
+
+---
+
+## Propuesta comercial
+
+La oferta de la plataforma está en:
+
+- `PROPUESTA-PLATAFORMA-CORPORATIVA-CAPACITACION.md`
+- `docs/Propuesta-Plataforma-Corporativa-Capacitacion-ARS.pdf`
 
 ---
 
@@ -148,3 +175,4 @@ public/images/                 # Logo e imágenes del home
 
 - No subas `.env` ni archivos `.db` (están en `.gitignore`).
 - Los uploads de materiales viven en `/uploads` (ignorado por git).
+- Repositorio: [github.com/nicoconti1901/NOV-Campus](https://github.com/nicoconti1901/NOV-Campus).
