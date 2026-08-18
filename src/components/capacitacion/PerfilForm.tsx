@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 const fieldClass =
-  "w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-brand-dark caret-brand-dark outline-none placeholder:text-brand-gray-light focus:border-brand-orange focus:ring-2 focus:ring-brand-orange/20";
+  "w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-brand-dark caret-brand-dark outline-none placeholder:text-brand-gray-light focus:border-brand-red focus:ring-2 focus:ring-brand-red/20";
 
 export function PerfilForm() {
   const router = useRouter();
@@ -96,7 +96,7 @@ export function PerfilForm() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-lg bg-brand-orange py-3 text-sm font-semibold text-brand-black hover:bg-brand-orange-dark disabled:opacity-60"
+          className="w-full rounded-lg bg-brand-red py-3 text-sm font-semibold text-white hover:bg-brand-red-dark disabled:opacity-60"
         >
           {loading ? "Guardando..." : "Continuar al campus"}
         </button>

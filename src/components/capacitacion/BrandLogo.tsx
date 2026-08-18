@@ -8,22 +8,20 @@ type Props = {
 };
 
 const sizes = {
-  sm: { px: 48, box: "h-12 w-12" },
-  md: { px: 56, box: "h-14 w-14" },
-  lg: { px: 96, box: "h-24 w-24" },
-  xl: { px: 140, box: "h-[8.75rem] w-[8.75rem]" },
+  sm: "h-9 w-auto",
+  md: "h-11 w-auto",
+  lg: "h-16 w-auto",
+  xl: "h-20 w-auto sm:h-24",
 } as const;
 
 export function BrandLogo({ size = "md", className = "", priority = false }: Props) {
-  const { px, box } = sizes[size];
-
   return (
     <Image
       src="/images/logo.jpeg"
       alt={siteConfig.name}
-      width={px}
-      height={px}
-      className={`shrink-0 rounded-full bg-black object-contain ${box} ${className}`}
+      width={866}
+      height={425}
+      className={`shrink-0 rounded-md bg-white object-contain ${sizes[size]} ${className}`}
       priority={priority}
     />
   );

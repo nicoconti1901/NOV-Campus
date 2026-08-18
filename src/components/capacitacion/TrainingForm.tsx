@@ -194,7 +194,7 @@ export function TrainingForm({ rooms, initial }: Props) {
   }
 
   const fieldClass =
-    "w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-brand-dark caret-brand-dark outline-none placeholder:text-brand-gray-light focus:border-brand-orange focus:ring-2 focus:ring-brand-orange/20";
+    "w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-brand-dark caret-brand-dark outline-none placeholder:text-brand-gray-light focus:border-brand-red focus:ring-2 focus:ring-brand-red/20";
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8 text-brand-dark">

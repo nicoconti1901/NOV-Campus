@@ -1,13 +1,13 @@
 export const siteConfig = {
-  name: "Casino Club",
+  name: "NOV",
   tagline: "Campus de Capacitación",
   description:
-    "Plataforma de capacitación corporativa para el personal de Casino Club. Acceso privado, seguimiento de progreso y certificación digital.",
-  email: "capacitacion@casinoclub.com",
+    "Plataforma de capacitación corporativa para el personal de NOV. Acceso privado, seguimiento de progreso y certificación digital.",
+  email: "capacitacion@nov.com",
   location: "Argentina",
 };
 
 export const professional = {
-  name: "Casino Club",
+  name: "NOV",
   license: "Campus Virtual",
 };

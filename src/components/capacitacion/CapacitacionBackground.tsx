@@ -9,7 +9,7 @@ export function CapacitacionBackground({ children }: Props) {
         className="pointer-events-none fixed inset-0 -z-10 opacity-40"
         style={{
           backgroundImage:
-            "radial-gradient(ellipse 80% 50% at 50% -20%, rgba(255,140,0,0.18), transparent), radial-gradient(ellipse 60% 40% at 100% 100%, rgba(255,140,0,0.08), transparent)",
+            "radial-gradient(ellipse 80% 50% at 50% -20%, rgba(237,50,41,0.18), transparent), radial-gradient(ellipse 60% 40% at 100% 100%, rgba(97,102,110,0.16), transparent)",
         }}
         aria-hidden
       />

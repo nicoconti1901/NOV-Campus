@@ -24,7 +24,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     <CapacitacionBackground>
       <CampusNav
         subtitle="Capacitadores"
-        title="Casino Club Campus"
+        title="NOV Campus"
         titleHref="/capacitacion/admin"
         logoutEndpoint="/api/auth/admin/logout"
       />
@@ -41,7 +41,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 href={link.href}
                 className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
                   active
-                    ? "bg-brand-orange text-brand-black shadow-sm"
+                    ? "bg-brand-red text-white shadow-sm"
                     : "text-brand-gray hover:bg-white/80"
                 }`}
               >

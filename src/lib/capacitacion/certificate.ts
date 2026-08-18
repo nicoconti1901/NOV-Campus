@@ -19,11 +19,11 @@ export type CertificateData = {
 };
 
 const BRAND = {
-  red: [255, 140, 0] as const,
-  redDark: [230, 122, 0] as const,
-  dark: [10, 10, 18] as const,
-  gray: [88, 89, 91] as const,
-  grayLight: [138, 139, 141] as const,
+  red: [237, 50, 41] as const,
+  redDark: [196, 39, 32] as const,
+  dark: [47, 51, 58] as const,
+  gray: [97, 102, 110] as const,
+  grayLight: [139, 144, 152] as const,
   white: [255, 255, 255] as const,
 };
 
@@ -91,8 +91,8 @@ async function loadSealBase64(imagePath: string): Promise<string | null> {
 
   const ringSvg = Buffer.from(
     `<svg xmlns="http://www.w3.org/2000/svg" width="${canvas}" height="${canvas}">
-      <circle cx="${cx}" cy="${cy}" r="${redR}" fill="none" stroke="rgb(255,140,0)" stroke-width="${redStroke}"/>
-      <circle cx="${cx}" cy="${cy}" r="${grayR}" fill="none" stroke="rgb(88,89,91)" stroke-width="${grayStroke}"/>
+      <circle cx="${cx}" cy="${cy}" r="${redR}" fill="none" stroke="rgb(237,50,41)" stroke-width="${redStroke}"/>
+      <circle cx="${cx}" cy="${cy}" r="${grayR}" fill="none" stroke="rgb(97,102,110)" stroke-width="${grayStroke}"/>
     </svg>`
   );
 
@@ -233,7 +233,7 @@ export async function generateCertificatePdf(data: CertificateData): Promise<Buf
   ]);
 
   if (logoBase64) {
-    doc.addImage(`data:image/png;base64,${logoBase64}`, "PNG", 34, 28, 44, 14.5);
+    doc.addImage(`data:image/png;base64,${logoBase64}`, "PNG", 32, 24, 48, 23.5);
   }
 
   if (roomSealBase64) {

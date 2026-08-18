@@ -12,7 +12,7 @@ export default function CampusLayout({ children }: { children: React.ReactNode }
     <>
       <CampusNav
         subtitle="Campus virtual"
-        title="Casino Club Campus"
+        title="NOV Campus"
         logoutEndpoint="/api/auth/student/logout"
         showCertificates
       />
