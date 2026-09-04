@@ -11,8 +11,9 @@ from pathlib import Path
 import edge_tts
 from pydub import AudioSegment
 
-VOICE = "es-AR-ElenaNeural"
-RATE = "-12%"
+VOICE = "es-AR-TomasNeural"
+RATE = "-5%"
+PITCH = "-4Hz"
 
 
 def run_ffmpeg(ffmpeg: str, args: list[str]) -> None:
@@ -27,7 +28,7 @@ def run_ffmpeg(ffmpeg: str, args: list[str]) -> None:
 async def synth_one(text: str, dest: Path, ffmpeg: str) -> int:
     mp3 = dest.with_suffix(".mp3")
     wav = dest.with_suffix(".wav")
-    communicate = edge_tts.Communicate(text, VOICE, rate=RATE)
+    communicate = edge_tts.Communicate(text, VOICE, rate=RATE, pitch=PITCH)
     await communicate.save(str(mp3))
     run_ffmpeg(
         ffmpeg,
@@ -73,7 +74,7 @@ def mix(timeline_path: Path, cache: Path, out_wav: Path) -> None:
                 duration=start + len(clip) - len(bed) + 400, frame_rate=24000
             )
         bed = bed.overlay(clip, position=start)
-        cursor = start + len(clip) + 180
+        cursor = start + len(clip) + 80
     out_wav.parent.mkdir(parents=True, exist_ok=True)
     bed.export(out_wav, format="wav")
 
