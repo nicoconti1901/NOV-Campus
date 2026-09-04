@@ -204,22 +204,45 @@ async function revealPage(page, durationMs) {
   }, Math.max(400, durationMs));
 }
 
+async function gotoSafe(page, href) {
+  let lastError;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      await page.goto(href, { waitUntil: "domcontentloaded", timeout: 60000 });
+      return;
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  throw lastError;
+}
+
 async function arrive(page, href, locator) {
   const target = new URL(href).pathname.replace(/\/$/, "");
   if (pathnameOf(page) !== target) {
-    await page.goto(href, { waitUntil: "domcontentloaded", timeout: 60000 });
+    await gotoSafe(page, href);
   }
   if (locator) await waitShown(locator);
   await ready(page);
 }
 
+async function clickOrGo(page, locator, href, readyLocator) {
+  await scrollTop(page);
+  await page.mouse.move(40, 40);
+  await page.evaluate(() => window.stop());
+  await gotoSafe(page, href);
+  if (readyLocator) await waitShown(readyLocator, 25000);
+  await ready(page);
+  if (locator) await spotlight(page, locator);
+}
+
 async function authThenGo(page, login, destPath, readyLocator) {
   await login();
-  await page.goto(destPath, { waitUntil: "domcontentloaded", timeout: 60000 });
+  await gotoSafe(page, destPath);
   await waitShown(readyLocator, 20000);
   if (pathnameOf(page).includes("/login")) {
     await login();
-    await page.goto(destPath, { waitUntil: "domcontentloaded", timeout: 60000 });
+    await gotoSafe(page, destPath);
     await waitShown(readyLocator, 20000);
   }
   await ready(page);
@@ -236,13 +259,14 @@ function createHelpers(page, durations, timeline, startedAt) {
       await page.evaluate((value) => window.__tour?.setCaption?.(value), clip.text);
       timeline.events.push({ id, startMs: Date.now() - startedAt.value });
       const waitMs = (durations[id] || 4000) + 40;
+      const started = Date.now();
       const reveal = opts.reveal !== false;
       const scanMs = reveal ? Math.max(420, Math.floor(waitMs * 0.55)) : 0;
+      const extra = typeof opts.during === "function" ? opts.during() : Promise.resolve();
       if (reveal) await revealPage(page, scanMs);
       if (locator) await spotlight(page, locator);
-      const rest = Math.max(80, waitMs - scanMs);
-      const extra = typeof opts.during === "function" ? opts.during() : Promise.resolve();
-      await Promise.all([page.waitForTimeout(rest), extra]);
+      const elapsed = Date.now() - started;
+      await Promise.all([page.waitForTimeout(Math.max(80, waitMs - elapsed)), extra]);
     },
     async click(locator) {
       if (!locator) return;
@@ -268,7 +292,7 @@ async function runTour(page, durations, timeline, startedAt, env) {
   const base = env.base;
   const by = (fn) => firstVisible(fn(page));
   const heading = (name) => page.getByRole("heading", { name });
-  const nav = (label) => page.locator("header").getByRole("link", { name: label });
+  const navHref = (path) => page.locator("header").locator(`a[href="${path}"]`);
   const loginAdmin = () =>
     page.request.post(`${env.base}/api/auth/admin/login`, {
       data: { email: env.adminEmail, password: env.adminPassword },
@@ -300,9 +324,7 @@ async function runTour(page, durations, timeline, startedAt, env) {
   await speak("portal.trainers", await by((p) => p.getByRole("link", { name: /Capacitadores/i })), { reveal: false });
   await speak("portal.progress", await by((p) => p.getByRole("link", { name: /Progreso/i })), { reveal: false });
 
-  await click(await by((p) => p.getByRole("link", { name: /Participantes/i })));
-  await waitShown(page.getByPlaceholder(/Ej:/).or(page.locator("form")));
-  await ready(page);
+  await clickOrGo(page, await by((p) => p.getByRole("link", { name: /Participantes/i })), `${base}/capacitacion/${env.accessKey}`, page.getByPlaceholder(/Ej:/).or(page.locator("form")));
   await section("Participantes");
   await type(await by((p) => p.getByPlaceholder(/Ej:/)), env.studentDni);
   await speak("campus.login", await by((p) => p.locator("form")), { reveal: false });
@@ -349,9 +371,7 @@ async function runTour(page, durations, timeline, startedAt, env) {
   await page.request.post(`${env.base}/api/auth/student/logout`);
   await arrive(page, `${base}/capacitacion`, heading(/Campus de capacitaci/i));
 
-  await click(await by((p) => p.getByRole("link", { name: /Capacitadores/i })));
-  await waitShown(page.locator('input[type="email"]'));
-  await ready(page);
+  await clickOrGo(page, await by((p) => p.getByRole("link", { name: /Capacitadores/i })), `${base}/capacitacion/admin/login`, page.locator('input[type="email"]'));
   await section("Capacitadores");
   await type(page.locator('input[type="email"]').first(), env.adminEmail);
   await type(page.locator('input[type="password"]').first(), env.adminPassword);
@@ -363,21 +383,15 @@ async function runTour(page, durations, timeline, startedAt, env) {
   await speak("admin.stats", await by((p) => p.getByText("Resumen general")));
   await speak("admin.rooms.home", await by((p) => p.getByRole("heading", { name: /Salas de capacitaci/i })));
 
-  await click(await by((p) => nav("Salas")));
-  await waitShown(heading(/^Salas$/i));
-  await ready(page);
+  await clickOrGo(page, await by((p) => navHref("/capacitacion/admin/salas")), `${base}/capacitacion/admin/salas`, heading(/Salas existentes/i));
   await speak("salas.intro", await by((p) => heading(/^Salas$/i)));
   await speak("salas.form", await by((p) => p.locator("form")));
   await speak("salas.list", await by((p) => heading(/Salas existentes/i)));
 
-  await click(await by((p) => nav("Capacitaciones")));
-  await waitShown(heading(/^Capacitaciones$/i));
-  await ready(page);
+  await clickOrGo(page, await by((p) => navHref("/capacitacion/admin/capacitaciones")), `${base}/capacitacion/admin/capacitaciones`, heading(/Capacitaciones/i));
   await speak("cursos.list", await by((p) => p.getByRole("link", { name: /Nueva capacitaci/i })));
 
-  await click(await by((p) => p.getByRole("link", { name: /Nueva capacitaci/i })));
-  await waitShown(heading(/Datos generales/i));
-  await ready(page);
+  await clickOrGo(page, await by((p) => p.getByRole("link", { name: /Nueva capacitaci/i })), `${base}/capacitacion/admin/capacitaciones/nueva`, heading(/Datos generales/i));
   await speak("cursos.nueva", await by((p) => heading(/Datos generales/i)));
   await speak("cursos.reglas", await by((p) => labeledControl(p, /^Sala$/)));
   await speak("cursos.alcance", await by((p) => labeledControl(p, /Sector/)));
@@ -386,39 +400,24 @@ async function runTour(page, durations, timeline, startedAt, env) {
   await speak("cursos.quiz", await by((p) => heading(/Evaluaci/i)));
   await speak("cursos.guardar", await by((p) => p.getByRole("button", { name: /Crear capacitaci/i })));
 
-  await click(await by((p) => nav("Matriz")));
-  await waitShown(heading(/Celdas de capacitaci/i));
-  await ready(page);
+  await clickOrGo(page, await by((p) => navHref("/capacitacion/admin/matriz")), `${base}/capacitacion/admin/matriz`, heading(/Celdas de capacitaci/i));
   await speak("matriz.intro", await by((p) => heading(/Celdas de capacitaci/i)));
   await speak("matriz.form", await by((p) => heading(/Agregar tema a una celda/i)));
   await speak("matriz.celdas", await by((p) => p.getByText(/Celdas publicadas/i)));
 
-  await click(await by((p) => nav(/Alumnos y DNIs/i)));
-  await waitShown(heading(/Alumnos y DNIs/i));
-  await ready(page);
+  await clickOrGo(page, await by((p) => navHref("/capacitacion/admin/alumnos")), `${base}/capacitacion/admin/alumnos`, heading(/Alumnos y DNIs/i));
   await speak("alumnos.alta", await by((p) => heading(/Habilitar nuevo DNI/i)));
   await speak("alumnos.csv", await by((p) => p.getByText(/Importar CSV/i)));
 
-  await click(await by((p) => nav("Alertas")));
-  await waitShown(heading(/alertas/i));
-  await ready(page);
+  await clickOrGo(page, await by((p) => navHref("/capacitacion/admin/alertas")), `${base}/capacitacion/admin/alertas`, heading(/alertas/i));
   await speak("alertas.intro", await by((p) => heading(/alertas/i)));
   await click(await by((p) => p.getByRole("button", { name: "Nueva alerta" })));
   await speak("alertas.form", await by((p) => p.getByPlaceholder(/Curso de altura/i)));
   await click(await by((p) => p.getByRole("button", { name: "Cancelar" })));
 
-  await speak("progreso.entrada", await by((p) => nav("Inicio")), { reveal: false });
-  await click(await by((p) => nav("Inicio")));
-  await waitShown(heading(/Campus de capacitaci/i));
-  await ready(page);
-  await click(await by((p) => p.getByRole("link", { name: /Progreso/i })));
-  await waitShown(heading(/Cumplimiento del campus/i), 20000);
-  if (pathnameOf(page).includes("/login")) {
-    await type(page.locator('input[type="email"]').first(), env.adminEmail);
-    await type(page.locator('input[type="password"]').first(), env.adminPassword);
-    await authThenGo(page, loginAdmin, `${base}/capacitacion/admin/progreso`, heading(/Cumplimiento del campus/i));
-  }
-  await ready(page);
+  await speak("progreso.entrada", await by((p) => navHref("/capacitacion")), { reveal: false });
+  await clickOrGo(page, await by((p) => navHref("/capacitacion")), `${base}/capacitacion`, heading(/Campus de capacitaci/i));
+  await clickOrGo(page, await by((p) => p.getByRole("link", { name: /Progreso/i })), `${base}/capacitacion/admin/progreso`, heading(/Cumplimiento del campus/i));
   await section("Progreso");
   await speak("progreso.kpis", await by((p) => heading(/Cumplimiento del campus/i)));
   await speak("progreso.filtros", await by((p) => p.getByPlaceholder(/Buscar por alumno/i)));
@@ -486,10 +485,10 @@ function mux(videoPath, audioPath) {
   if (result.status !== 0) throw new Error("ffmpeg mux failed");
 }
 
-function clearTourCache() {
+function clearVideoCache() {
   fs.mkdirSync(CACHE, { recursive: true });
   for (const name of fs.readdirSync(CACHE)) {
-    if (/\.(wav|mp3|webm|json)$/i.test(name)) {
+    if (/\.(webm)$/i.test(name) || name === "timeline.json" || name === "narration.wav") {
       fs.unlinkSync(path.join(CACHE, name));
     }
   }
@@ -497,7 +496,7 @@ function clearTourCache() {
 
 async function main() {
   loadEnv();
-  clearTourCache();
+  clearVideoCache();
   const clipsPath = path.join(CACHE, "clips.json");
   const exported = spawnSync("python", [path.join(HERE, "audio.py"), "export", clipsPath], {
     cwd: HERE,
@@ -508,8 +507,13 @@ async function main() {
   const namedNov = CLIPS.filter((clip) => /\bNOV\b/i.test(clip.text));
   if (namedNov.length) throw new Error(`Narracion nombra NOV: ${namedNov.map((c) => c.id).join(", ")}`);
 
-  console.log("Generando voz...");
-  generateTts(clipsPath);
+  const durationsPath = path.join(CACHE, "durations.json");
+  if (!fs.existsSync(durationsPath)) {
+    console.log("Generando voz...");
+    generateTts(clipsPath);
+  } else {
+    console.log("Reusando voz generada");
+  }
   const durations = JSON.parse(fs.readFileSync(path.join(CACHE, "durations.json"), "utf8"));
 
   const env = {
@@ -551,6 +555,10 @@ async function main() {
     const narrationWav = path.join(CACHE, "narration.wav");
     console.log("Mezclando narracion...");
     mixAudio(timelinePath, narrationWav);
+    if (!timeline.events.some((event) => event.id === "cierre")) {
+      console.error("Tour incompleto: no se actualiza el MP4 final.");
+      return;
+    }
     console.log("Exportando MP4...");
     mux(videoPath, narrationWav);
     console.log(`Video listo: ${VIDEO_OUT}`);
