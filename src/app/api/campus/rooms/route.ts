@@ -6,10 +6,17 @@ import { unauthorized } from "@/lib/api";
 export async function GET() {
   try {
     const session = await requireStudent();
+    const assignments = await prisma.trainingAssignment.findMany({
+      where: { studentId: session.studentId, training: { published: true } },
+      select: { trainingId: true },
+    });
+    const assignedIds = assignments.map((a) => a.trainingId);
+    if (assignedIds.length === 0) return NextResponse.json([]);
+
     const rooms = await prisma.room.findMany({
       include: {
         trainings: {
-          where: { published: true },
+          where: { published: true, id: { in: assignedIds } },
           include: {
             progress: {
               where: { studentId: session.studentId },
@@ -21,7 +28,7 @@ export async function GET() {
       orderBy: { name: "asc" },
     });
 
-    return NextResponse.json(rooms);
+    return NextResponse.json(rooms.filter((room) => room.trainings.length > 0));
   } catch {
     return unauthorized();
   }

@@ -11,6 +11,7 @@ model Admin {
   id           String   @id @default(cuid())
   email        String   @unique
   passwordHash String
+  role         String   @default("trainer") // "trainer" | "company"
   createdAt    DateTime @default(now())
 }
 
@@ -23,6 +24,7 @@ model Room {
 
 model Training {
   id           String             @id @default(cuid())
+  code         String?            @unique
   title        String
   description  String?
   coverImage   String?
@@ -30,10 +32,14 @@ model Training {
   room         Room               @relation(fields: [roomId], references: [id], onDelete: Cascade)
   minPassScore Int                @default(70)
   published    Boolean            @default(false)
+  validityDays Int                @default(365)
   materials    Material[]
   questions    Question[]
   progress     TrainingProgress[]
   attempts     QuizAttempt[]
+  scopes       TrainingScope[]
+  cellItems    MatrixCellItem[]
+  assignments  TrainingAssignment[]
   createdAt    DateTime           @default(now())
   updatedAt    DateTime           @updatedAt
 }
@@ -72,19 +78,134 @@ model AllowedDni {
   createdAt DateTime @default(now())
 }
 
+model Sede {
+  id          String              @id @default(cuid())
+  code        String              @unique
+  name        String
+  active      Boolean             @default(true)
+  students    Student[]
+  scopes      TrainingScope[]
+  cells       MatrixCell[]
+}
+
+model Puesto {
+  id          String              @id @default(cuid())
+  code        String              @unique
+  name        String
+  active      Boolean             @default(true)
+  students    Student[]
+  scopes      TrainingScope[]
+  cells       MatrixCell[]
+}
+
+model Tarea {
+  id          String              @id @default(cuid())
+  code        String              @unique
+  name        String
+  active      Boolean             @default(true)
+  students    Student[]
+  scopes      TrainingScope[]
+  cells       MatrixCell[]
+}
+
 model Student {
-  id               String             @id @default(cuid())
-  dni              String             @unique
+  id               String               @id @default(cuid())
+  dni              String               @unique
   firstName        String?
   lastName         String?
   email            String?
   phone            String?
   company          String?
-  profileCompleted Boolean            @default(false)
-  createdAt        DateTime           @default(now())
-  updatedAt        DateTime           @updatedAt
+  sedeId           String?
+  sede             Sede?                @relation(fields: [sedeId], references: [id])
+  puestoId         String?
+  puesto           Puesto?              @relation(fields: [puestoId], references: [id])
+  tareaId          String?
+  tarea            Tarea?               @relation(fields: [tareaId], references: [id])
+  profileCompleted Boolean              @default(false)
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
   progress         TrainingProgress[]
   attempts         QuizAttempt[]
+  assignments      TrainingAssignment[]
+}
+
+model TrainingScope {
+  id           String   @id @default(cuid())
+  trainingId   String
+  training     Training @relation(fields: [trainingId], references: [id], onDelete: Cascade)
+  sedeId       String
+  sede         Sede     @relation(fields: [sedeId], references: [id])
+  puestoId     String
+  puesto       Puesto   @relation(fields: [puestoId], references: [id])
+  tareaId      String
+  tarea        Tarea    @relation(fields: [tareaId], references: [id])
+  validityDays Int
+
+  @@unique([trainingId, sedeId, puestoId, tareaId])
+}
+
+model AnnualMatrix {
+  id          String               @id @default(cuid())
+  year        Int                  @unique
+  status      String               @default("draft")
+  publishedAt DateTime?
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+  cells       MatrixCell[]
+  assignments TrainingAssignment[]
+}
+
+model MatrixCell {
+  id           String               @id @default(cuid())
+  matrixId     String
+  matrix       AnnualMatrix         @relation(fields: [matrixId], references: [id], onDelete: Cascade)
+  sedeId       String
+  sede         Sede                 @relation(fields: [sedeId], references: [id])
+  puestoId     String
+  puesto       Puesto               @relation(fields: [puestoId], references: [id])
+  tareaId      String
+  tarea        Tarea                @relation(fields: [tareaId], references: [id])
+  items        MatrixCellItem[]
+  assignments  TrainingAssignment[]
+
+  @@unique([matrixId, sedeId, puestoId, tareaId])
+}
+
+model MatrixCellItem {
+  id           String     @id @default(cuid())
+  cellId       String
+  cell         MatrixCell @relation(fields: [cellId], references: [id], onDelete: Cascade)
+  trainingId   String
+  training     Training   @relation(fields: [trainingId], references: [id], onDelete: Cascade)
+  validityDays Int
+
+  @@unique([cellId, trainingId])
+}
+
+model TrainingAssignment {
+  id               String       @id @default(cuid())
+  studentId        String
+  student          Student      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  trainingId       String
+  training         Training     @relation(fields: [trainingId], references: [id], onDelete: Cascade)
+  matrixId         String
+  matrix           AnnualMatrix @relation(fields: [matrixId], references: [id], onDelete: Cascade)
+  cellId           String
+  cell             MatrixCell   @relation(fields: [cellId], references: [id], onDelete: Cascade)
+  status           String       @default("assigned")
+  validityDays     Int
+  assignedAt       DateTime     @default(now())
+  dueAt            DateTime
+  completedAt      DateTime?
+  notice30At       DateTime?
+  notice7At        DateTime?
+  notice1At        DateTime?
+  noticeExpiredAt  DateTime?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  @@unique([studentId, trainingId, matrixId])
 }
 
 model TrainingProgress {
@@ -100,6 +221,18 @@ model TrainingProgress {
   updatedAt       DateTime  @updatedAt
 
   @@unique([studentId, trainingId])
+}
+
+model Alert {
+  id          String    @id @default(cuid())
+  title       String
+  body        String
+  severity    String    @default("info")  // "info" | "warning" | "danger"
+  active      Boolean   @default(true)
+  publishedAt DateTime  @default(now())
+  expiresAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
 
 model QuizAttempt {

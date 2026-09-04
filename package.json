@@ -7,10 +7,12 @@
     "build": "prisma generate && next build",
     "start": "prisma migrate deploy && next start",
     "lint": "next lint",
+    "test": "tsx --test src/lib/capacitacion/*.test.ts",
     "db:migrate": "prisma migrate dev",
     "db:migrate:deploy": "prisma migrate deploy",
     "db:seed": "tsx prisma/seed.ts",
     "db:setup": "prisma migrate dev && tsx prisma/seed.ts",
+    "record-demo": "node scripts/demo-tour/record.mjs",
     "postinstall": "prisma generate"
   },
   "dependencies": {
@@ -20,6 +22,7 @@
     "iron-session": "^8.0.4",
     "jspdf": "^4.2.1",
     "lucide-react": "^0.511.0",
+    "motion": "^13.2.0",
     "next": "^15.3.3",
     "prisma": "^5.22.0",
     "react": "^19.1.0",

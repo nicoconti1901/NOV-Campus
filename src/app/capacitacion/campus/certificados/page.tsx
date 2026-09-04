@@ -26,24 +26,25 @@ export default async function CertificadosPage() {
     <div>
       <Link
         href="/capacitacion/campus"
-        className="inline-flex items-center gap-1.5 rounded-lg bg-white/80 px-3 py-1.5 text-sm font-medium text-brand-gray shadow-sm ring-1 ring-white/60 backdrop-blur-sm transition-colors hover:text-brand-red"
+        className="inline-flex items-center gap-1.5 rounded-lg bg-surface-muted px-3 py-1.5 text-sm font-medium text-brand-gray shadow-sm border border-black/8 backdrop-blur-sm transition-colors hover:text-brand-red"
       >
         <ChevronLeft className="h-4 w-4" />
         Volver a salas
       </Link>
 
-      <div className="mt-6 overflow-hidden rounded-3xl bg-white/95 shadow-xl ring-1 ring-white/70 backdrop-blur-sm">
-        <div className="bg-gradient-to-br from-emerald-600 to-teal-700 px-6 py-7 text-white sm:px-8">
+      <div className="mt-6 overflow-hidden rounded-3xl bg-white/80 ring-1 ring-slate-200/80 shadow-[0_18px_40px_-24px_rgba(15,23,42,0.28)] backdrop-blur-xl">
+        <div className="relative bg-stock-valid px-6 py-7 text-stock-valid-ink sm:px-8">
+          <span className="absolute inset-x-0 top-0 h-1 bg-linear-to-r from-emerald-400 to-teal-500" />
           <div className="flex items-center gap-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-white/30 bg-white/15 backdrop-blur">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/80 ring-1 ring-emerald-200">
               <Award className="h-7 w-7" />
             </div>
             <div>
-              <p className="text-xs font-semibold uppercase tracking-widest text-white/70">
+              <p className="text-xs font-semibold uppercase tracking-widest text-ink-muted">
                 Historial
               </p>
               <h2 className="mt-1 text-2xl font-bold sm:text-3xl">Mis certificados</h2>
-              <p className="mt-1 text-sm text-white/85">
+              <p className="mt-1 text-sm text-ink-muted">
                 {certificates.length === 0
                   ? "Todavía no tenés certificados emitidos"
                   : `${certificates.length} certificado${certificates.length !== 1 ? "s" : ""} disponible${certificates.length !== 1 ? "s" : ""}`}
@@ -85,7 +86,7 @@ export default async function CertificadosPage() {
                   className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-gradient-to-r from-white to-brand-gray-bg/40 p-5 shadow-sm sm:flex-row sm:items-center"
                 >
                   <div
-                    className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-white ${theme.accentBg}`}
+                    className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-ink ${theme.accentBg}`}
                   >
                     <RoomIcon className="h-5 w-5" />
                   </div>
@@ -102,7 +103,7 @@ export default async function CertificadosPage() {
                   <div className="flex shrink-0 flex-wrap gap-2">
                     <Link
                       href={`/capacitacion/campus/capacitacion/${item.trainingId}`}
-                      className="inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-brand-dark hover:bg-brand-gray-bg"
+                      className="inline-flex items-center justify-center rounded-lg border border-black/10 bg-surface-card px-4 py-2.5 text-sm font-semibold text-brand-dark hover:bg-brand-gray-bg"
                     >
                       Ver
                     </Link>

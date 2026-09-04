@@ -3,8 +3,9 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireStudent } from "@/lib/session";
 import { apiError, unauthorized } from "@/lib/api";
-import { PROGRESS_STATUS } from "@/lib/capacitacion/constants";
+import { ASSIGNMENT_STATUS, PROGRESS_STATUS } from "@/lib/capacitacion/constants";
 import { allMaterialsViewed, parseMaterialsViewed } from "@/lib/capacitacion/materials";
+import { completeAssignment, studentHasAssignment } from "@/lib/capacitacion/matrix-service";
 
 const schema = z.object({
   answers: z.record(z.string(), z.string()),
@@ -28,6 +29,13 @@ export async function POST(
 
     if (!training) return apiError("Capacitación no encontrada", 404);
 
+    const assignment = await studentHasAssignment(session.studentId!, trainingId);
+    if (!assignment) return apiError("Esta capacitación no está asignada a tu puesto", 403);
+
+    const stillValid =
+      assignment.status === ASSIGNMENT_STATUS.COMPLETED &&
+      assignment.dueAt.getTime() > Date.now();
+
     const progress = await prisma.trainingProgress.findUnique({
       where: {
         studentId_trainingId: {
@@ -37,20 +45,22 @@ export async function POST(
       },
     });
 
-    if (progress?.status === PROGRESS_STATUS.COMPLETED) {
+    if (stillValid && progress?.status === PROGRESS_STATUS.COMPLETED) {
       return apiError("Ya aprobaste esta capacitación. Solo podés descargar el certificado.", 403);
     }
 
-    const alreadyPassed = await prisma.quizAttempt.findFirst({
-      where: {
-        studentId: session.studentId!,
-        trainingId,
-        passed: true,
-      },
-      select: { id: true },
-    });
-    if (alreadyPassed) {
-      return apiError("Ya aprobaste esta capacitación. Solo podés descargar el certificado.", 403);
+    if (stillValid) {
+      const alreadyPassed = await prisma.quizAttempt.findFirst({
+        where: {
+          studentId: session.studentId!,
+          trainingId,
+          passed: true,
+        },
+        select: { id: true },
+      });
+      if (alreadyPassed) {
+        return apiError("Ya aprobaste esta capacitación. Solo podés descargar el certificado.", 403);
+      }
     }
 
     const materialIds = await prisma.material.findMany({
@@ -108,6 +118,10 @@ export async function POST(
         completedAt: passed ? new Date() : null,
       },
     });
+
+    if (passed) {
+      await completeAssignment(session.studentId!, trainingId);
+    }
 
     return NextResponse.json({ score, passed, minPassScore: training.minPassScore });
   } catch (e) {

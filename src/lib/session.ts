@@ -1,9 +1,11 @@
 import { SessionOptions, getIronSession } from "iron-session";
 import { cookies } from "next/headers";
 import type { NextRequest, NextResponse } from "next/server";
+import { isCompanyRole } from "@/lib/capacitacion/admin-access";
 
 export type SessionData = {
   adminId?: string;
+  adminRole?: string;
   studentId?: string;
   dni?: string;
 };
@@ -71,6 +73,17 @@ export async function getSessionFromMiddleware(
 }
 
 export async function requireAdmin() {
+  const session = await getSession();
+  if (!session.adminId) {
+    throw new Error("UNAUTHORIZED");
+  }
+  if (isCompanyRole(session.adminRole)) {
+    throw new Error("UNAUTHORIZED");
+  }
+  return session;
+}
+
+export async function requireProgressAccess() {
   const session = await getSession();
   if (!session.adminId) {
     throw new Error("UNAUTHORIZED");

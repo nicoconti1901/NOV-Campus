@@ -83,6 +83,8 @@ SESSION_SECRET="un-secreto-largo-de-al-menos-32-caracteres"
 CAMPUS_ACCESS_KEY="tu-clave-privada"
 ADMIN_EMAIL="admin@nov.com"
 ADMIN_PASSWORD="tu-password-seguro"
+COMPANY_EMAIL="empresa@nov.com"
+COMPANY_PASSWORD="tu-password-empresa"
 ```
 
 > Prisma resuelve rutas SQLite relativas desde la carpeta `prisma/`.  
@@ -113,6 +115,7 @@ Abrí [http://localhost:3000](http://localhost:3000) → redirige a `/capacitaci
 | Portal | `/capacitacion` | — |
 | Participantes | `/capacitacion/<CAMPUS_ACCESS_KEY>` | DNI habilitado por admin |
 | Capacitadores | `/capacitacion/admin/login` | `ADMIN_EMAIL` / `ADMIN_PASSWORD` |
+| Representante (solo progreso) | `/capacitacion/admin/progreso/login` | `COMPANY_EMAIL` / `COMPANY_PASSWORD` |
 
 ---
 
@@ -131,6 +134,11 @@ Abrí [http://localhost:3000](http://localhost:3000) → redirige a `/capacitaci
 3. Configura evaluación y puntaje mínimo.
 4. Habilita DNIs (alta individual o importación).
 5. Consulta progreso de participantes.
+
+### Representante de la empresa
+1. Entra por el módulo **Progreso** del portal.
+2. Ve únicamente el tablero de cumplimiento (sedes, asignaciones y exportación CSV).
+3. No accede a salas, matriz, alumnos ni al resto del panel de capacitadores.
 
 ---
 

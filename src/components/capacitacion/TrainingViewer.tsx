@@ -32,6 +32,7 @@ type Training = {
   materialsViewed: string[];
   progressStatus: string;
   progressScore: number | null;
+  assignmentStatus?: string;
 };
 
 export function TrainingViewer() {
@@ -51,7 +52,7 @@ export function TrainingViewer() {
     if (res.ok) {
       setTraining(data);
       setViewedIds(data.materialsViewed ?? []);
-      if (data.progressStatus === "completed") {
+      if (data.progressStatus === "completed" && data.assignmentStatus !== "expired") {
         setResult({
           score: data.progressScore ?? 0,
           passed: true,
@@ -76,7 +77,8 @@ export function TrainingViewer() {
   );
   const materialsComplete = allMaterialsViewed(materialIds, viewedIds);
   const isCompleted =
-    training?.progressStatus === "completed" || Boolean(result?.passed);
+    (training?.progressStatus === "completed" && training.assignmentStatus !== "expired") ||
+    Boolean(result?.passed);
 
   async function markViewed(materialId: string) {
     if (viewedIds.includes(materialId)) return;
@@ -135,7 +137,7 @@ export function TrainingViewer() {
     const score = result?.score ?? training.progressScore ?? 0;
     return (
       <div>
-        <nav className="mb-6 inline-flex flex-wrap items-center gap-2 rounded-xl border border-white/70 bg-white/95 px-3 py-2 text-sm text-brand-gray shadow-sm backdrop-blur-sm">
+        <nav className="mb-6 inline-flex flex-wrap items-center gap-2 rounded-xl border border-black/10 bg-surface px-3 py-2 text-sm text-brand-gray shadow-sm backdrop-blur-sm">
           <Link href="/capacitacion/campus" className="hover:text-brand-red">
             Mis salas
           </Link>
@@ -147,18 +149,15 @@ export function TrainingViewer() {
           <span className="font-medium text-brand-dark">{training.title}</span>
         </nav>
 
-        <div className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-emerald-100 sm:rounded-3xl">
-          <div className="bg-gradient-to-br from-emerald-600 to-teal-700 px-6 py-8 text-white sm:px-8">
+        <div className="overflow-hidden border border-rule bg-paper-raised">
+          <div className="bg-stock-valid px-6 py-8 text-stock-valid-ink sm:px-8">
             <div className="flex items-start gap-4">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-white/30 bg-white/15">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center border border-stock-valid-ink/20 bg-paper-raised">
                 <Award className="h-7 w-7" />
               </div>
               <div>
-                <p className="text-xs font-semibold uppercase tracking-widest text-white/70">
-                  Capacitación aprobada
-                </p>
-                <h2 className="mt-1 text-2xl font-bold sm:text-3xl">{training.title}</h2>
-                <p className="mt-2 text-sm text-white/85">{training.room.name}</p>
+                <h2 className="font-display text-2xl font-semibold sm:text-3xl">{training.title}</h2>
+                <p className="mt-2 text-sm">VIGENTE · {training.room.name}</p>
               </div>
             </div>
           </div>
@@ -182,7 +181,7 @@ export function TrainingViewer() {
             <div className="mt-6 flex flex-wrap gap-3">
               <Link
                 href="/capacitacion/campus/certificados"
-                className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-brand-dark hover:bg-brand-gray-bg"
+                className="inline-flex items-center gap-2 rounded-lg border border-black/10 bg-surface-card px-4 py-2.5 text-sm font-semibold text-brand-dark hover:bg-brand-gray-bg"
               >
                 <Award className="h-4 w-4 text-emerald-600" />
                 Ver historial de certificados
@@ -202,7 +201,7 @@ export function TrainingViewer() {
 
   return (
     <div>
-      <nav className="mb-6 inline-flex flex-wrap items-center gap-2 rounded-xl border border-white/70 bg-white/95 px-3 py-2 text-sm text-brand-gray shadow-sm backdrop-blur-sm">
+      <nav className="mb-6 inline-flex flex-wrap items-center gap-2 rounded-xl border border-black/10 bg-surface px-3 py-2 text-sm text-brand-gray shadow-sm backdrop-blur-sm">
         <Link href="/capacitacion/campus" className="hover:text-brand-red">
           Mis salas
         </Link>
@@ -210,7 +209,7 @@ export function TrainingViewer() {
         <span className="font-medium text-brand-dark">{training.room.name}</span>
       </nav>
 
-      <section className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-gray-100 sm:rounded-3xl">
+      <section className="overflow-hidden rounded-2xl bg-surface shadow-sm ring-1 ring-gray-100 sm:rounded-3xl">
         <div className="relative min-h-[220px] sm:min-h-[260px]">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -236,18 +235,8 @@ export function TrainingViewer() {
         </div>
 
         {training.description && (
-          <div className="border-t border-gray-100 bg-gradient-to-br from-white via-brand-gray-bg/40 to-white px-6 py-6 sm:px-8">
-            <div className="flex gap-4">
-              <div className={`mt-1 h-12 w-1 shrink-0 rounded-full ${theme.accentBg}`} />
-              <div>
-                <p className={`text-xs font-semibold uppercase tracking-widest ${theme.accent}`}>
-                  Sobre esta capacitación
-                </p>
-                <p className="mt-2 max-w-3xl text-base leading-relaxed text-brand-dark/85">
-                  {training.description}
-                </p>
-              </div>
-            </div>
+          <div className="border-t border-rule bg-paper px-6 py-6 sm:px-8">
+            <p className="max-w-3xl text-sm leading-relaxed text-ink">{training.description}</p>
           </div>
         )}
       </section>
@@ -256,11 +245,7 @@ export function TrainingViewer() {
         <button
           type="button"
           onClick={() => setActiveStep("materials")}
-          className={`flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-semibold transition-colors ${
-            activeStep === "materials"
-              ? "border-brand-red text-brand-red"
-              : "border-transparent text-brand-gray hover:text-brand-dark"
-          }`}
+          className={`flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-semibold transition-colors ${ activeStep === "materials" ? "border-brand-red text-brand-red" : "border-transparent text-brand-gray hover:text-brand-dark" }`}
         >
           <PlayCircle className="h-4 w-4" />
           Material didáctico
@@ -270,13 +255,7 @@ export function TrainingViewer() {
           type="button"
           onClick={() => materialsComplete && setActiveStep("quiz")}
           disabled={!materialsComplete}
-          className={`flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-semibold transition-colors ${
-            activeStep === "quiz"
-              ? "border-brand-red text-brand-red"
-              : materialsComplete
-                ? "border-transparent text-brand-gray hover:text-brand-dark"
-                : "cursor-not-allowed border-transparent text-gray-300"
-          }`}
+          className={`flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-semibold transition-colors ${ activeStep === "quiz" ? "border-brand-red text-brand-red" : materialsComplete ? "border-transparent text-brand-gray hover:text-brand-dark" : "cursor-not-allowed border-transparent text-gray-300" }`}
         >
           {!materialsComplete ? <Lock className="h-4 w-4" /> : <FileText className="h-4 w-4" />}
           Evaluación
@@ -286,7 +265,7 @@ export function TrainingViewer() {
       {activeStep === "materials" && (
         <section className="mt-6 space-y-6">
           {training.materials.length === 0 ? (
-            <div className="rounded-2xl bg-white p-8 text-center shadow-sm ring-1 ring-gray-100">
+            <div className="rounded-2xl bg-surface p-8 text-center shadow-sm ring-1 ring-gray-100">
               <p className="text-brand-gray">Esta capacitación no tiene material didáctico.</p>
               <button
                 type="button"
@@ -309,9 +288,7 @@ export function TrainingViewer() {
                 return (
                   <div
                     key={m.id}
-                    className={`overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ${
-                      viewed ? "ring-emerald-200" : "ring-gray-100"
-                    }`}
+                    className={`overflow-hidden rounded-2xl bg-surface shadow-sm ring-1 ${ viewed ? "ring-emerald-200" : "ring-gray-100" }`}
                   >
                     <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
                       <div className="flex items-center gap-3">
@@ -358,8 +335,8 @@ export function TrainingViewer() {
                 );
               })}
 
-              <div className="flex items-center justify-between rounded-xl bg-white px-5 py-4 shadow-sm ring-1 ring-gray-100">
-                <p className="text-sm text-brand-gray">
+              <div className="flex items-center justify-between rounded-xl border border-rule bg-paper-raised px-5 py-4">
+                <p className="text-sm text-ink-muted">
                   Progreso: {viewedIds.filter((vid) => materialIds.includes(vid)).length} de{" "}
                   {materialIds.length} materiales
                 </p>
@@ -379,20 +356,15 @@ export function TrainingViewer() {
       )}
 
       {activeStep === "quiz" && (
-        <section className="mt-6 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-gray-100 sm:rounded-3xl">
-          <div className={`bg-gradient-to-br ${theme.gradient} px-6 py-6 text-white sm:px-8`}>
+        <section className="mt-6 overflow-hidden border border-rule bg-paper-raised">
+          <div className="border-b border-rule bg-paper px-6 py-6 sm:px-8">
             <div className="flex items-start gap-4">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-white/30 bg-white/15">
-                <ClipboardList className="h-6 w-6" />
-              </div>
+              <ClipboardList className="h-6 w-6 shrink-0 text-ink" />
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/70">
-                  Evaluación · {training.room.name}
-                </p>
-                <h3 className="mt-1 text-xl font-bold sm:text-2xl">Evaluación final</h3>
-                <p className="mt-2 text-sm text-white/85">
-                  Demostrá lo aprendido. Puntaje mínimo para aprobar:{" "}
-                  <span className="font-semibold text-white">{training.minPassScore}%</span>
+                <h3 className="font-display text-xl font-semibold text-ink sm:text-2xl">Evaluación final</h3>
+                <p className="mt-2 text-sm text-ink-muted">
+                  Puntaje mínimo para aprobar:{" "}
+                  <span className="font-semibold text-ink">{training.minPassScore}%</span>
                 </p>
               </div>
             </div>
@@ -400,18 +372,18 @@ export function TrainingViewer() {
 
           <div className="p-6 sm:p-8">
             {result ? (
-              <div className="rounded-xl bg-red-50 p-6 ring-1 ring-red-200">
+              <div className="border border-rule bg-stock-expired p-6 text-stock-expired-ink">
                 <div className="flex items-start gap-4">
-                  <FileText className="h-10 w-10 shrink-0 text-red-600" />
+                  <FileText className="h-10 w-10 shrink-0" />
                   <div>
-                    <p className="text-lg font-bold text-red-800">
+                    <p className="text-lg font-semibold">
                       No alcanzaste el puntaje mínimo
                     </p>
-                    <p className="mt-1 text-sm text-red-700">Tu puntaje: {result.score}%</p>
+                    <p className="mt-1 text-sm">Tu puntaje: {result.score}%</p>
                     <button
                       type="button"
                       onClick={() => setResult(null)}
-                      className="mt-4 text-sm font-semibold text-red-800 underline"
+                      className="mt-4 text-sm font-semibold underline"
                     >
                       Intentar nuevamente
                     </button>
@@ -423,12 +395,12 @@ export function TrainingViewer() {
                 {training.questions.map((q, i) => (
                   <fieldset
                     key={q.id}
-                    className={`overflow-hidden rounded-2xl border border-gray-100 border-l-4 bg-brand-gray-bg/30 ${theme.accentBorder}`}
+                    className="overflow-hidden border border-rule bg-paper" 
                   >
                     <div className="px-5 py-4">
-                      <legend className="text-sm font-bold text-brand-dark">
+                      <legend className="text-sm font-bold text-ink">
                         <span
-                          className={`mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full text-xs text-white ${theme.accentBg}`}
+                          className={`mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full text-xs text-ink ${theme.accentBg}`}
                         >
                           {i + 1}
                         </span>
@@ -441,10 +413,10 @@ export function TrainingViewer() {
                         return (
                           <label
                             key={opt.id}
-                            className={`flex cursor-pointer items-center gap-3 rounded-xl bg-white px-4 py-3.5 text-sm transition-all ${
+                            className={`flex cursor-pointer items-center gap-3 border px-4 py-3.5 text-sm transition-colors ${
                               selected
-                                ? `font-medium text-brand-dark shadow-sm ring-2 ring-brand-red/30`
-                                : "text-brand-gray ring-1 ring-transparent hover:ring-brand-red/20"
+                                ? "border-brand-red bg-stock-expired/60 font-medium text-ink"
+                                : "border-rule bg-paper-raised text-ink hover:bg-paper-muted"
                             }`}
                           >
                             <input
@@ -467,7 +439,7 @@ export function TrainingViewer() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className={`rounded-xl px-8 py-3.5 text-sm font-semibold text-white shadow-sm transition-colors disabled:opacity-60 ${theme.accentBg} hover:opacity-90`}
+                  className="rounded-xl bg-brand-red px-8 py-3.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-red-dark disabled:opacity-60" 
                 >
                   {submitting ? "Enviando..." : "Enviar evaluación"}
                 </button>

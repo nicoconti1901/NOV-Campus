@@ -5,6 +5,7 @@ import { requireAdmin } from "@/lib/session";
 import { unauthorized, apiError } from "@/lib/api";
 import { formatDni, isValidDni } from "@/lib/capacitacion/utils";
 import { PROGRESS_STATUS } from "@/lib/capacitacion/constants";
+import { syncStudentAssignments } from "@/lib/capacitacion/matrix-service";
 
 export async function GET(
   _request: Request,
@@ -28,6 +29,9 @@ export async function GET(
         orderBy: { attemptedAt: "desc" },
         include: { training: true },
       },
+      sede: true,
+      puesto: true,
+      tarea: true,
     },
   });
 
@@ -42,6 +46,9 @@ const studentSchema = z.object({
   email: z.string().email().nullable().optional().or(z.literal("")),
   phone: z.string().nullable().optional(),
   company: z.string().nullable().optional(),
+  sedeId: z.string().nullable().optional(),
+  puestoId: z.string().nullable().optional(),
+  tareaId: z.string().nullable().optional(),
   profileCompleted: z.boolean().optional(),
 });
 
@@ -76,6 +83,9 @@ export async function PUT(
     if (body.email !== undefined) data.email = body.email?.trim() || null;
     if (body.phone !== undefined) data.phone = body.phone?.trim() || null;
     if (body.company !== undefined) data.company = body.company?.trim() || null;
+    if (body.sedeId !== undefined) data.sedeId = body.sedeId || null;
+    if (body.puestoId !== undefined) data.puestoId = body.puestoId || null;
+    if (body.tareaId !== undefined) data.tareaId = body.tareaId || null;
     if (body.profileCompleted !== undefined) data.profileCompleted = body.profileCompleted;
 
     const student = await prisma.student.update({
@@ -86,8 +96,13 @@ export async function PUT(
           include: { training: { include: { room: { select: { name: true, slug: true } } } } },
           orderBy: { updatedAt: "desc" },
         },
+        sede: true,
+        puesto: true,
+        tarea: true,
       },
     });
+
+    await syncStudentAssignments(student.id);
 
     return NextResponse.json(student);
   } catch (e) {

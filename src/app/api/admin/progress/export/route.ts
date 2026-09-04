@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/session";
+import { requireProgressAccess } from "@/lib/session";
 import { unauthorized } from "@/lib/api";
 import { formatDniDisplay } from "@/lib/capacitacion/utils";
 
@@ -14,7 +14,7 @@ function csvEscape(value: string | number | null | undefined): string {
 
 export async function GET() {
   try {
-    await requireAdmin();
+    await requireProgressAccess();
   } catch {
     return unauthorized();
   }

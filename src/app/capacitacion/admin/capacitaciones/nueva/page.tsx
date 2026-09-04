@@ -5,17 +5,20 @@ import { CapacitacionSectionHeader } from "@/components/capacitacion/Capacitacio
 
 export default async function NuevaCapacitacionPage() {
   await requireAdminPage();
-  const rooms = await prisma.room.findMany({ orderBy: { name: "asc" } });
+  const [rooms, sedes, puestos, tareas] = await Promise.all([
+    prisma.room.findMany({ orderBy: { name: "asc" } }),
+    prisma.sede.findMany({ where: { active: true }, orderBy: { name: "asc" } }),
+    prisma.puesto.findMany({ where: { active: true }, orderBy: { name: "asc" } }),
+    prisma.tarea.findMany({ where: { active: true }, orderBy: { name: "asc" } }),
+  ]);
 
   return (
-    <div>
+    <div className="space-y-8">
       <CapacitacionSectionHeader
-        title="Nueva capacitación"
-        subtitle="Cargá material didáctico y la evaluación"
+        title="Nueva capacitacion"
+        subtitle="Carga material, evaluacion y el alcance obligatorio (sector, puesto y tarea)."
       />
-      <div className="mt-2">
-        <TrainingForm rooms={rooms} />
-      </div>
+      <TrainingForm rooms={rooms} directory={{ sedes, puestos, tareas }} />
     </div>
   );
 }

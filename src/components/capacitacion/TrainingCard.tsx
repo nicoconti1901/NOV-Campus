@@ -26,6 +26,11 @@ const statusConfig: Record<
     className: "bg-red-50 text-red-700 ring-red-200",
     icon: XCircle,
   },
+  expired: {
+    label: "Vencida",
+    className: "bg-red-50 text-red-700 ring-red-200",
+    icon: XCircle,
+  },
 };
 
 type Props = {
@@ -35,6 +40,7 @@ type Props = {
   coverImage?: string | null;
   status?: string;
   score?: number | null;
+  dueLabel?: string;
 };
 
 export function TrainingCard({
@@ -44,6 +50,7 @@ export function TrainingCard({
   coverImage,
   status = "not_started",
   score,
+  dueLabel,
 }: Props) {
   const config = statusConfig[status] ?? statusConfig.not_started;
   const StatusIcon = config.icon;
@@ -87,6 +94,9 @@ export function TrainingCard({
             {description && (
               <p className="mt-1 line-clamp-2 text-sm text-brand-gray">{description}</p>
             )}
+            {dueLabel && (
+              <p className="mt-1 text-xs font-medium text-emerald-800/80">{dueLabel}</p>
+            )}
             <p className="mt-2 text-xs font-medium text-emerald-700">
               Curso finalizado. Podés ver y descargar tu certificado.
             </p>
@@ -95,7 +105,7 @@ export function TrainingCard({
         <div className="flex shrink-0 flex-wrap gap-2">
           <Link
             href={`/capacitacion/campus/capacitacion/${id}`}
-            className="inline-flex items-center justify-center rounded-lg border border-emerald-200 bg-white px-4 py-2.5 text-sm font-semibold text-emerald-700 hover:bg-emerald-50"
+            className="inline-flex items-center justify-center rounded-lg border border-emerald-700/20 bg-surface-card px-4 py-2.5 text-sm font-semibold text-emerald-700 hover:bg-emerald-50"
           >
             Ver certificado
           </Link>
@@ -113,7 +123,7 @@ export function TrainingCard({
   return (
     <Link
       href={`/capacitacion/campus/capacitacion/${id}`}
-      className="group flex items-center gap-4 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-brand-red/20 hover:shadow-lg"
+      className="group flex items-center gap-4 rounded-2xl border border-black/8 bg-surface-card p-5 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-brand-red/20 hover:shadow-lg"
     >
       {thumb}
 
@@ -133,6 +143,7 @@ export function TrainingCard({
         {description && (
           <p className="mt-1 line-clamp-2 text-sm text-brand-gray">{description}</p>
         )}
+        {dueLabel && <p className="mt-1 text-xs font-medium text-brand-gray">{dueLabel}</p>}
       </div>
 
       <span className="hidden shrink-0 items-center gap-1 text-sm font-semibold text-brand-red sm:inline-flex">

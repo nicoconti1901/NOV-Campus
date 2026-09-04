@@ -83,12 +83,12 @@ export function MaterialVideoPlayer({ src, title, onEnded, className }: Props) {
       />
 
       {showOverlay && (
-        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-black/75 px-6 text-center text-white">
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-black/75 px-6 text-center text-ink">
           {phase === "error" ? (
             <>
               <AlertCircle className="h-10 w-10 text-red-300" />
               <p className="text-base font-semibold">No se pudo cargar el video</p>
-              <p className="max-w-md text-sm text-white/80">
+              <p className="max-w-md text-sm text-ink-muted">
                 Revisá tu conexión e intentá de nuevo. Si el problema continúa, avisá al administrador.
               </p>
               <button
@@ -99,25 +99,25 @@ export function MaterialVideoPlayer({ src, title, onEnded, className }: Props) {
                   setWaitSeconds(0);
                   videoRef.current?.load();
                 }}
-                className="mt-1 rounded-lg bg-white px-4 py-2 text-sm font-semibold text-brand-dark hover:bg-white/90"
+                className="mt-1 rounded-lg bg-surface-card px-4 py-2 text-sm font-semibold text-ink hover:bg-surface"
               >
                 Reintentar
               </button>
             </>
           ) : (
             <>
-              <Loader2 className="h-10 w-10 animate-spin text-white" />
+              <Loader2 className="h-10 w-10 animate-spin text-ink" />
               <p className="text-base font-semibold">
                 {phase === "loading" ? "Cargando video…" : "Bufferizando reproducción…"}
               </p>
-              <p className="max-w-md text-sm text-white/85">
+              <p className="max-w-md text-sm text-ink-muted">
                 Los videos de capacitación pueden tardar en iniciar según tu conexión.
                 {duration != null && duration > 0
                   ? ` Duración del video: ${formatSeconds(duration)}.`
                   : " Esperá a que el indicador avance."}
               </p>
               <div className="mt-1 w-full max-w-xs">
-                <div className="mb-1.5 flex justify-between text-xs text-white/70">
+                <div className="mb-1.5 flex justify-between text-xs text-ink-muted">
                   <span>Progreso de carga</span>
                   <span>{bufferPct > 0 ? `${bufferPct}%` : "iniciando…"}</span>
                 </div>
@@ -127,7 +127,7 @@ export function MaterialVideoPlayer({ src, title, onEnded, className }: Props) {
                     style={{ width: `${Math.max(bufferPct, phase === "loading" ? 8 : 4)}%` }}
                   />
                 </div>
-                <p className="mt-2 text-xs text-white/65">
+                <p className="mt-2 text-xs text-ink-muted">
                   Tiempo de espera: {waitSeconds}s
                   {waitSeconds >= 30
                     ? " — sigue cargando, no cierres esta página"

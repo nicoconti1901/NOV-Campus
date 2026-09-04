@@ -7,6 +7,7 @@ import {
   questionsHaveCorrectAnswers,
   trainingCreateSchema,
 } from "@/lib/capacitacion/training-schema";
+import { applyScopeToPublishedMatrix } from "@/lib/capacitacion/matrix-service";
 
 export async function GET() {
   try {
@@ -23,7 +24,14 @@ export async function GET() {
         orderBy: { sortOrder: "asc" },
         include: { options: true },
       },
-      _count: { select: { progress: true } },
+      _count: { select: { progress: true, assignments: true } },
+      scopes: {
+        include: {
+          sede: true,
+          puesto: true,
+          tarea: true,
+        },
+      },
     },
     orderBy: { updatedAt: "desc" },
   });
@@ -53,6 +61,7 @@ export async function POST(request: NextRequest) {
         roomId: body.roomId,
         minPassScore: body.minPassScore,
         published: body.published ?? false,
+        validityDays: body.validityDays ?? body.scope.validityDays,
         materials: {
           create: body.materials.map((m, i) => ({
             type: m.type,
@@ -78,7 +87,16 @@ export async function POST(request: NextRequest) {
         room: true,
         materials: true,
         questions: { include: { options: true } },
+        scopes: true,
       },
+    });
+
+    await applyScopeToPublishedMatrix({
+      trainingId: training.id,
+      sedeId: body.scope.sedeId,
+      puestoId: body.scope.puestoId,
+      tareaId: body.scope.tareaId,
+      validityDays: body.scope.validityDays,
     });
 
     return NextResponse.json(training, { status: 201 });

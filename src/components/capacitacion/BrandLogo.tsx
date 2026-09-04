@@ -17,11 +17,11 @@ const sizes = {
 export function BrandLogo({ size = "md", className = "", priority = false }: Props) {
   return (
     <Image
-      src="/images/logo.jpeg"
+      src="/images/logo-on-dark.png"
       alt={siteConfig.name}
-      width={866}
-      height={425}
-      className={`shrink-0 rounded-md bg-white object-contain ${sizes[size]} ${className}`}
+      width={1400}
+      height={543}
+      className={`shrink-0 object-contain ${sizes[size]} ${className}`}
       priority={priority}
     />
   );

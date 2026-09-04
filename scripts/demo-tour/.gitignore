@@ -1,0 +1,7 @@
+node_modules
+.cache
+*.webm
+*.mp4
+*.wav
+*.mp3
+_query-db.mjs

@@ -3,9 +3,18 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ImageIcon, Plus, Trash2, Upload } from "lucide-react";
+import {
+  formDashedBtnClass,
+  formFieldClass,
+  formHintClass,
+  formLabelClass,
+  formPanelClass,
+  formPanelTitleClass,
+  formSecondaryBtnClass,
+} from "@/lib/capacitacion/form-styles";
 
 type Room = { id: string; name: string; slug: string };
-
+type Master = { id: string; name: string };
 type Option = { text: string; isCorrect: boolean };
 type Question = { text: string; options: Option[] };
 type Material = { type: "video" | "file"; title: string; fileUrl: string; fileName?: string };
@@ -17,12 +26,17 @@ type TrainingData = {
   roomId: string;
   minPassScore: number;
   published: boolean;
+  validityDays: number;
+  sedeId: string;
+  puestoId: string;
+  tareaId: string;
   materials: Material[];
   questions: Question[];
 };
 
 type Props = {
   rooms: Room[];
+  directory: { sedes: Master[]; puestos: Master[]; tareas: Master[] };
   initial?: Partial<TrainingData> & { id?: string };
 };
 
@@ -34,7 +48,7 @@ const emptyQuestion = (): Question => ({
   ],
 });
 
-export function TrainingForm({ rooms, initial }: Props) {
+export function TrainingForm({ rooms, directory, initial }: Props) {
   const router = useRouter();
   const isEdit = Boolean(initial?.id);
 
@@ -45,6 +59,10 @@ export function TrainingForm({ rooms, initial }: Props) {
     roomId: initial?.roomId ?? rooms[0]?.id ?? "",
     minPassScore: initial?.minPassScore ?? 70,
     published: initial?.published ?? false,
+    validityDays: initial?.validityDays ?? 365,
+    sedeId: initial?.sedeId ?? directory.sedes[0]?.id ?? "",
+    puestoId: initial?.puestoId ?? directory.puestos[0]?.id ?? "",
+    tareaId: initial?.tareaId ?? directory.tareas[0]?.id ?? "",
     materials: initial?.materials ?? [],
     questions: initial?.questions?.length ? initial.questions : [emptyQuestion()],
   });
@@ -158,7 +176,15 @@ export function TrainingForm({ rooms, initial }: Props) {
     const res = await fetch(url, {
       method,
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
+      body: JSON.stringify({
+        ...form,
+        scope: {
+          sedeId: form.sedeId,
+          puestoId: form.puestoId,
+          tareaId: form.tareaId,
+          validityDays: form.validityDays,
+        },
+      }),
     });
 
     if (res.ok) {
@@ -193,16 +219,16 @@ export function TrainingForm({ rooms, initial }: Props) {
     }
   }
 
-  const fieldClass =
-    "w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-brand-dark caret-brand-dark outline-none placeholder:text-brand-gray-light focus:border-brand-red focus:ring-2 focus:ring-brand-red/20";
+  const fieldClass = formFieldClass;
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8 text-brand-dark">
-      <section className="rounded-xl bg-white p-6 shadow-sm">
-        <h3 className="font-bold text-brand-dark">Datos generales</h3>
+    <form onSubmit={handleSubmit} className="space-y-8 text-ink">
+      <section className={formPanelClass}>
+        <span className="absolute inset-x-0 top-0 h-1 bg-linear-to-r from-brand-navy via-brand-red to-teal-500" />
+        <h3 className={formPanelTitleClass}>Datos generales</h3>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <div className="sm:col-span-2">
-            <label className="mb-1 block text-sm font-medium text-brand-dark">Título</label>
+            <label className={formLabelClass}>Título</label>
             <input
               required
               value={form.title}
@@ -211,7 +237,7 @@ export function TrainingForm({ rooms, initial }: Props) {
             />
           </div>
           <div className="sm:col-span-2">
-            <label className="mb-1 block text-sm font-medium text-brand-dark">Descripción</label>
+            <label className={formLabelClass}>Descripción</label>
             <textarea
               rows={3}
               value={form.description}
@@ -221,8 +247,8 @@ export function TrainingForm({ rooms, initial }: Props) {
           </div>
 
           <div className="sm:col-span-2">
-            <label className="mb-1 block text-sm font-medium">Imagen representativa del curso</label>
-            <p className="mb-3 text-xs text-brand-gray">
+            <label className={formLabelClass}>Imagen representativa del curso</label>
+            <p className={`mb-3 ${formHintClass}`}>
               Opcional. Se muestra al alumno y reemplaza la imagen de la sala en el certificado.
             </p>
             {form.coverImage ? (
@@ -231,10 +257,10 @@ export function TrainingForm({ rooms, initial }: Props) {
                 <img
                   src={form.coverImage}
                   alt="Portada del curso"
-                  className="h-28 w-44 rounded-xl object-cover ring-1 ring-gray-200"
+                  className="h-28 w-44 rounded-xl object-cover ring-1 ring-white/15"
                 />
                 <div className="flex flex-col gap-2">
-                  <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-gray-300 px-4 py-2 text-sm hover:border-brand-red">
+                  <label className={formDashedBtnClass}>
                     <Upload className="h-4 w-4" />
                     Cambiar imagen
                     <input
@@ -255,7 +281,7 @@ export function TrainingForm({ rooms, initial }: Props) {
                 </div>
               </div>
             ) : (
-              <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-gray-300 px-4 py-3 text-sm hover:border-brand-red">
+              <label className={formDashedBtnClass}>
                 <ImageIcon className="h-4 w-4" />
                 {uploadingCover ? "Subiendo..." : "Subir imagen del curso"}
                 <input
@@ -270,7 +296,7 @@ export function TrainingForm({ rooms, initial }: Props) {
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-brand-dark">Sala</label>
+            <label className={formLabelClass}>Sala</label>
             <select
               required
               value={form.roomId}
@@ -285,7 +311,7 @@ export function TrainingForm({ rooms, initial }: Props) {
             </select>
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-brand-dark">
+            <label className={formLabelClass}>
               Puntaje mínimo de aprobación (%)
             </label>
             <input
@@ -298,7 +324,67 @@ export function TrainingForm({ rooms, initial }: Props) {
               className={fieldClass}
             />
           </div>
-          <label className="flex items-center gap-2 text-sm text-brand-dark sm:col-span-2">
+          <div>
+            <label className={formLabelClass}>Vigencia (días)</label>
+            <input
+              type="number"
+              min={1}
+              max={3650}
+              required
+              value={form.validityDays}
+              onChange={(e) => setForm({ ...form, validityDays: Number(e.target.value) })}
+              className={fieldClass}
+            />
+          </div>
+          <div>
+            <label className={formLabelClass}>Sector / sede</label>
+            <select
+              required
+              value={form.sedeId}
+              onChange={(e) => setForm({ ...form, sedeId: e.target.value })}
+              className={fieldClass}
+            >
+              {directory.sedes.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className={formLabelClass}>Puesto</label>
+            <select
+              required
+              value={form.puestoId}
+              onChange={(e) => setForm({ ...form, puestoId: e.target.value })}
+              className={fieldClass}
+            >
+              {directory.puestos.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className={formLabelClass}>Tarea</label>
+            <select
+              required
+              value={form.tareaId}
+              onChange={(e) => setForm({ ...form, tareaId: e.target.value })}
+              className={fieldClass}
+            >
+              {directory.tareas.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <p className={`sm:col-span-2 ${formHintClass}`}>
+            El alcance es obligatorio. La capacitación impacta solo a alumnos de esa celda (puesto × tarea × sede).
+          </p>
+          <label className="flex items-center gap-2 text-sm text-ink-muted sm:col-span-2">
             <input
               type="checkbox"
               checked={form.published}
@@ -309,10 +395,11 @@ export function TrainingForm({ rooms, initial }: Props) {
         </div>
       </section>
 
-      <section className="rounded-xl bg-white p-6 shadow-sm">
-        <h3 className="font-bold text-brand-dark">Material didáctico</h3>
+      <section className={formPanelClass}>
+        <span className="absolute inset-x-0 top-0 h-1 bg-linear-to-r from-brand-navy via-brand-red to-teal-500" />
+        <h3 className={formPanelTitleClass}>Material didáctico</h3>
         <div className="mt-4 flex flex-wrap gap-3">
-          <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-gray-300 px-4 py-2 text-sm hover:border-brand-red">
+          <label className={formDashedBtnClass}>
             <Upload className="h-4 w-4" />
             Subir video
             <input
@@ -322,7 +409,7 @@ export function TrainingForm({ rooms, initial }: Props) {
               onChange={(e) => handleMaterialUpload(e, "video")}
             />
           </label>
-          <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-gray-300 px-4 py-2 text-sm hover:border-brand-red">
+          <label className={formDashedBtnClass}>
             <Upload className="h-4 w-4" />
             Subir archivo
             <input
@@ -333,7 +420,7 @@ export function TrainingForm({ rooms, initial }: Props) {
             />
           </label>
           {uploading && (
-            <span className="text-sm text-brand-gray">
+            <span className={`text-sm ${formHintClass}`}>
               Subiendo{uploadProgress != null ? `… ${uploadProgress}%` : "…"}
               {uploadProgress != null && uploadProgress < 100
                 ? " (no cierres la pestaña)"
@@ -341,7 +428,7 @@ export function TrainingForm({ rooms, initial }: Props) {
             </span>
           )}
           {uploading && uploadProgress != null && (
-            <div className="h-2 w-full max-w-xs overflow-hidden rounded-full bg-gray-200">
+            <div className="h-2 w-full max-w-xs overflow-hidden rounded-full bg-white/10">
               <div
                 className="h-full rounded-full bg-brand-red transition-all duration-300"
                 style={{ width: `${uploadProgress}%` }}
@@ -353,7 +440,7 @@ export function TrainingForm({ rooms, initial }: Props) {
           {form.materials.map((m, i) => (
             <li
               key={i}
-              className="flex items-center justify-between rounded-lg bg-brand-gray-bg px-4 py-2 text-sm"
+              className="flex items-center justify-between rounded-xl border border-rule bg-paper-muted px-4 py-2.5 text-sm text-ink-muted"
             >
               <span>
                 {m.type === "video" ? "🎬" : "📄"} {m.title}
@@ -372,9 +459,10 @@ export function TrainingForm({ rooms, initial }: Props) {
         </ul>
       </section>
 
-      <section className="rounded-xl bg-white p-6 shadow-sm">
+      <section className={formPanelClass}>
+        <span className="absolute inset-x-0 top-0 h-1 bg-linear-to-r from-brand-navy via-brand-red to-teal-500" />
         <div className="flex items-center justify-between">
-          <h3 className="font-bold text-brand-dark">Evaluación (opción múltiple)</h3>
+          <h3 className={formPanelTitleClass}>Evaluación (opción múltiple)</h3>
           <button
             type="button"
             onClick={() => setForm({ ...form, questions: [...form.questions, emptyQuestion()] })}
@@ -386,7 +474,7 @@ export function TrainingForm({ rooms, initial }: Props) {
 
         <div className="mt-4 space-y-6">
           {form.questions.map((q, qi) => (
-            <div key={qi} className="rounded-lg border border-gray-100 p-4">
+            <div key={qi} className="rounded-xl border border-rule bg-paper-muted p-4">
               <div className="flex items-start justify-between gap-3">
                 <input
                   required
@@ -448,7 +536,7 @@ export function TrainingForm({ rooms, initial }: Props) {
                           questions[qi].options = q.options.filter((_, i) => i !== oi);
                           setForm({ ...form, questions });
                         }}
-                        className="text-brand-gray"
+                        className="text-ink-muted"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
@@ -478,7 +566,7 @@ export function TrainingForm({ rooms, initial }: Props) {
         <button
           type="submit"
           disabled={loading || deleting}
-          className="rounded-lg bg-brand-red px-6 py-3 text-sm font-semibold text-white hover:bg-brand-red-dark disabled:opacity-60"
+          className="rounded-xl bg-brand-red px-6 py-3 text-sm font-semibold text-white hover:bg-brand-red-dark disabled:opacity-60"
         >
           {loading ? "Guardando..." : isEdit ? "Guardar cambios" : "Crear capacitación"}
         </button>
@@ -487,9 +575,9 @@ export function TrainingForm({ rooms, initial }: Props) {
             type="button"
             onClick={handleDelete}
             disabled={loading || deleting}
-            className="inline-flex items-center gap-2 rounded-lg border border-red-200 px-6 py-3 text-sm font-semibold text-brand-red hover:bg-red-50 disabled:opacity-60"
+            className={`${formSecondaryBtnClass} border-brand-red/40 text-brand-red hover:border-brand-red hover:bg-brand-red/10`}
           >
-            <Trash2 className="h-4 w-4" />
+            <Trash2 className="mr-2 inline h-4 w-4" />
             {deleting ? "Eliminando..." : "Eliminar capacitación"}
           </button>
         )}

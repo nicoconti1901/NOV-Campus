@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireStudent } from "@/lib/session";
 import { apiError, unauthorized } from "@/lib/api";
 import { parseMaterialsViewed } from "@/lib/capacitacion/materials";
+import { studentHasAssignment } from "@/lib/capacitacion/matrix-service";
 
 export async function POST(
   _request: Request,
@@ -20,6 +21,9 @@ export async function POST(
     });
 
     if (!material) return apiError("Material no encontrado", 404);
+
+    const assignment = await studentHasAssignment(session.studentId!, trainingId);
+    if (!assignment) return apiError("Esta capacitación no está asignada a tu puesto", 403);
 
     const progress = await prisma.trainingProgress.findUnique({
       where: {

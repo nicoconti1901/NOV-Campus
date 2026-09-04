@@ -3,8 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { GraduationCap } from "lucide-react";
+import { motion } from "motion/react";
 import { BrandLogo } from "@/components/capacitacion/BrandLogo";
+import { LoginStage } from "@/components/capacitacion/LoginStage";
+import { formFieldClass, formLabelClass } from "@/lib/capacitacion/form-styles";
 
 type Props = {
   accessKey: string;
@@ -21,54 +23,62 @@ export function CampusLoginForm({ accessKey }: Props) {
     setLoading(true);
     setError("");
 
-    const res = await fetch("/api/auth/student/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ dni, accessKey }),
-    });
+    try {
+      const res = await fetch("/api/auth/student/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dni, accessKey }),
+      });
+      const data = await res.json().catch(() => ({}));
 
-    if (res.ok) {
-      const data = await res.json();
-      if (data.profileCompleted) {
-        router.push("/capacitacion/campus");
-      } else {
-        router.push("/capacitacion/campus/perfil");
+      if (!res.ok) {
+        setError(data.error ?? "No se pudo ingresar");
+        return;
       }
-      router.refresh();
-    } else {
-      const data = await res.json();
-      setError(data.error ?? "No se pudo ingresar");
+
+      await router.push(
+        data.profileCompleted ? "/capacitacion/campus" : "/capacitacion/campus/perfil"
+      );
+    } catch {
+      setError("No se pudo ingresar. Reintenta en un momento.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4 py-12">
-      <div className="w-full max-w-md overflow-hidden rounded-2xl border border-white/10 bg-brand-black/70 shadow-2xl backdrop-blur-md">
-        <div className="bg-gradient-to-br from-brand-red to-brand-red-dark px-8 py-6 text-center text-white">
-          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-white/15">
-            <GraduationCap className="h-6 w-6" />
-          </div>
+    <LoginStage
+      imageSrc="/images/fotoAlumno.png"
+      imageAlt="Operario cursando en planta industrial"
+      overlay="bg-linear-to-br from-slate-950/80 via-brand-navy/70 to-sky-950/55"
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 18 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+        className="w-full max-w-md overflow-hidden rounded-3xl bg-sky-50/92 ring-1 ring-sky-200/80 shadow-[0_24px_60px_-24px_rgba(15,23,42,0.55)] backdrop-blur-xl"
+      >
+        <div className="bg-brand-navy px-8 py-6 text-center text-paper">
           <h1 className="font-display text-xl font-semibold uppercase tracking-[0.08em]">
-            Campus de Capacitación
+            Campus de Capacitacion
           </h1>
-          <p className="mt-1 text-sm text-white/80">Ingreso de participantes</p>
+          <p className="mt-1 text-sm text-paper/75">Ingreso de participantes</p>
         </div>
 
         <div className="p-8">
-          <Link href="/capacitacion" className="flex justify-center">
-            <BrandLogo size="lg" />
+          <Link href="/capacitacion" className="flex justify-center rounded-2xl bg-brand-navy px-4 py-3">
+            <BrandLogo size="lg" priority />
           </Link>
 
           <form onSubmit={handleSubmit} className="mt-8 space-y-4">
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-white/80">Número de DNI</label>
+              <label className={formLabelClass}>Número de DNI</label>
               <input
                 required
                 inputMode="numeric"
                 value={dni}
                 onChange={(e) => setDni(e.target.value)}
-                className="w-full rounded-xl border border-white/20 bg-white px-4 py-3 text-sm text-brand-dark caret-brand-dark outline-none transition-colors placeholder:text-brand-gray-light focus:border-brand-red focus:ring-2 focus:ring-brand-red/20"
+                className={formFieldClass}
                 placeholder="Ej: 30123456"
               />
             </div>
@@ -76,7 +86,7 @@ export function CampusLoginForm({ accessKey }: Props) {
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-xl bg-brand-red py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-red-dark disabled:opacity-60"
+              className="w-full rounded-xl bg-brand-red py-3 text-sm font-semibold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:bg-brand-red-dark disabled:translate-y-0 disabled:opacity-60"
             >
               {loading ? "Verificando..." : "Ingresar al campus"}
             </button>
@@ -84,12 +94,12 @@ export function CampusLoginForm({ accessKey }: Props) {
 
           <Link
             href="/capacitacion"
-            className="mt-6 block text-center text-sm text-white/50 transition-colors hover:text-brand-red"
+            className="mt-6 block text-center text-sm text-ink-muted transition-colors hover:text-brand-red"
           >
-            ← Volver al inicio
+            Volver al inicio
           </Link>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </LoginStage>
   );
 }

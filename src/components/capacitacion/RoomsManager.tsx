@@ -4,6 +4,12 @@ import { FormEvent, useEffect, useState } from "react";
 import Image from "next/image";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { getRoomTheme } from "@/lib/capacitacion/rooms";
+import {
+  formFieldClass,
+  formLabelClass,
+  formPanelClass,
+  formSecondaryBtnClass,
+} from "@/lib/capacitacion/form-styles";
 
 type Room = {
   id: string;
@@ -91,41 +97,41 @@ export function RoomsManager() {
   }
 
   if (loading) {
-    return <p className="text-sm text-brand-gray">Cargando salas...</p>;
+    return <p className="text-sm text-ink-muted">Cargando salas...</p>;
   }
 
   return (
     <div className="space-y-6">
-      <section className="overflow-hidden rounded-3xl bg-white/95 shadow-xl ring-1 ring-white/70 backdrop-blur-sm">
-        <div className="border-b border-gray-100 bg-gradient-to-r from-brand-red/5 to-transparent px-6 py-5 sm:px-8">
-          <h3 className="text-lg font-bold text-brand-dark">
+      <section className={formPanelClass}>
+        <div className="mb-5 border-b border-rule pb-4">
+          <h3 className="font-display text-sm font-semibold uppercase tracking-[0.1em] text-ink">
             {editingId ? "Editar sala" : "Nueva sala"}
           </h3>
-          <p className="mt-1 text-sm text-brand-gray">
+          <p className="mt-1 text-sm text-ink-muted">
             Creá o modificá las áreas temáticas del campus.
           </p>
         </div>
-        <form onSubmit={handleSubmit} className="space-y-4 p-6 sm:p-8">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-brand-dark">Nombre</label>
+              <label className={formLabelClass}>Nombre</label>
               <input
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Ej: Medio Ambiente"
-                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-brand-dark caret-brand-dark outline-none placeholder:text-brand-gray-light focus:border-brand-red focus:ring-2 focus:ring-brand-red/20"
+                className={formFieldClass}
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-brand-dark">
+              <label className={formLabelClass}>
                 Identificador (slug)
               </label>
               <input
                 value={slug}
                 onChange={(e) => setSlug(e.target.value)}
                 placeholder="Se genera solo si lo dejás vacío"
-                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-brand-dark caret-brand-dark outline-none placeholder:text-brand-gray-light focus:border-brand-red focus:ring-2 focus:ring-brand-red/20"
+                className={formFieldClass}
               />
             </div>
           </div>
@@ -142,20 +148,20 @@ export function RoomsManager() {
               <button
                 type="button"
                 onClick={resetForm}
-                className="rounded-xl border border-gray-200 px-5 py-3 text-sm font-semibold text-brand-dark hover:bg-brand-gray-bg"
+                className={formSecondaryBtnClass}
               >
                 Cancelar
               </button>
             )}
           </div>
           {error && <p className="text-sm text-brand-red">{error}</p>}
-          {success && <p className="text-sm text-emerald-600">{success}</p>}
+          {success && <p className="text-sm text-emerald-400">{success}</p>}
         </form>
       </section>
 
       <section className="space-y-4">
-        <div className="rounded-2xl border border-white/70 bg-white/95 px-4 py-3.5 shadow-md backdrop-blur-sm sm:px-5">
-          <h3 className="text-lg font-bold text-brand-dark">Salas existentes</h3>
+        <div className="rounded-2xl border border-rule bg-paper-raised px-4 py-3.5 sm:px-5">
+          <h3 className="font-display text-sm font-semibold uppercase tracking-[0.1em] text-ink">Salas existentes</h3>
         </div>
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {rooms.map((room) => {
@@ -164,7 +170,7 @@ export function RoomsManager() {
             return (
               <div
                 key={room.id}
-                className={`overflow-hidden rounded-3xl bg-white/95 shadow-xl ring-1 backdrop-blur-sm ${theme.ring}`}
+                className={`overflow-hidden rounded-3xl border border-rule bg-paper-raised ${theme.ring}`}
               >
                 <div className="relative h-36">
                   <Image
@@ -177,22 +183,22 @@ export function RoomsManager() {
                   <div className={`absolute inset-0 bg-gradient-to-t ${theme.overlay}`} />
                   <div className="absolute inset-0 flex flex-col justify-between p-4">
                     <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/30 bg-white/20 backdrop-blur">
-                      <Icon className="h-5 w-5 text-white" />
+                      <Icon className="h-5 w-5 text-ink" />
                     </div>
                     <div>
-                      <h4 className="text-lg font-bold text-white">{room.name}</h4>
-                      <p className="text-xs text-white/80">
+                      <h4 className="text-lg font-bold text-ink">{room.name}</h4>
+                      <p className="text-xs text-ink-muted">
                         {room.slug} · {room._count.trainings} curso
                         {room._count.trainings !== 1 ? "s" : ""}
                       </p>
                     </div>
                   </div>
                 </div>
-                <div className="flex gap-2 p-4">
+                <div className="flex gap-2 border-t border-rule p-4">
                   <button
                     type="button"
                     onClick={() => startEdit(room)}
-                    className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-brand-dark px-3 py-2.5 text-sm font-semibold text-white hover:bg-brand-gray"
+                    className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-brand-red px-3 py-2.5 text-sm font-semibold text-white hover:bg-brand-red-dark"
                   >
                     <Pencil className="h-4 w-4" />
                     Editar
@@ -200,7 +206,7 @@ export function RoomsManager() {
                   <button
                     type="button"
                     onClick={() => removeRoom(room)}
-                    className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-red-100 px-3 py-2.5 text-sm font-semibold text-brand-red hover:bg-red-50"
+                    className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-brand-red/35 px-3 py-2.5 text-sm font-semibold text-brand-red hover:bg-brand-red/10"
                   >
                     <Trash2 className="h-4 w-4" />
                     Borrar

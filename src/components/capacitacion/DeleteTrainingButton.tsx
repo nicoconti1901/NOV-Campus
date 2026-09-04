@@ -36,7 +36,7 @@ export function DeleteTrainingButton({
       type="button"
       onClick={handleDelete}
       disabled={loading}
-      className="inline-flex items-center gap-1.5 rounded-xl border border-red-100 bg-white px-3 py-2 text-xs font-semibold text-brand-red hover:bg-red-50 disabled:opacity-60"
+      className="inline-flex items-center gap-1.5 rounded-xl border border-brand-red/30 bg-transparent px-3 py-2 text-xs font-semibold text-red-300 hover:bg-brand-red/10 disabled:opacity-60"
     >
       <Trash2 className="h-3.5 w-3.5" />
       {loading ? "..." : "Borrar"}

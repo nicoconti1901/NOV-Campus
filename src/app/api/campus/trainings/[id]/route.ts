@@ -4,6 +4,7 @@ import { requireStudent } from "@/lib/session";
 import { apiError, unauthorized } from "@/lib/api";
 import { PROGRESS_STATUS } from "@/lib/capacitacion/constants";
 import { parseMaterialsViewed } from "@/lib/capacitacion/materials";
+import { studentHasAssignment } from "@/lib/capacitacion/matrix-service";
 
 export async function GET(
   _request: Request,
@@ -11,10 +12,13 @@ export async function GET(
 ) {
   try {
     const session = await requireStudent();
-    const { id } = await params;
+    const { id: trainingId } = await params;
+
+    const assignment = await studentHasAssignment(session.studentId!, trainingId);
+    if (!assignment) return apiError("Esta capacitación no está asignada a tu puesto", 403);
 
     const training = await prisma.training.findFirst({
-      where: { id, published: true },
+      where: { id: trainingId, published: true },
       include: {
         room: true,
         materials: { orderBy: { sortOrder: "asc" } },
@@ -37,14 +41,13 @@ export async function GET(
     const progress = training.progress[0];
     const materialsViewed = parseMaterialsViewed(progress?.materialsViewed);
     const isFinished =
-      progress?.status === PROGRESS_STATUS.COMPLETED ||
-      progress?.status === PROGRESS_STATUS.FAILED;
+      progress?.status === PROGRESS_STATUS.COMPLETED && assignment.status !== "expired";
 
     if (!progress) {
       await prisma.trainingProgress.create({
         data: {
           studentId: session.studentId!,
-          trainingId: id,
+          trainingId,
           status: PROGRESS_STATUS.IN_PROGRESS,
         },
       });
@@ -53,18 +56,26 @@ export async function GET(
         where: {
           studentId_trainingId: {
             studentId: session.studentId!,
-            trainingId: id,
+            trainingId,
           },
         },
-        data: { status: PROGRESS_STATUS.IN_PROGRESS },
+        data: {
+          status:
+            assignment.status === "expired" ? PROGRESS_STATUS.IN_PROGRESS : PROGRESS_STATUS.IN_PROGRESS,
+        },
       });
     }
 
     return NextResponse.json({
       ...training,
       materialsViewed,
-      progressStatus: progress?.status ?? PROGRESS_STATUS.IN_PROGRESS,
+      progressStatus:
+        assignment.status === "expired"
+          ? "expired"
+          : progress?.status ?? PROGRESS_STATUS.IN_PROGRESS,
       progressScore: progress?.score ?? null,
+      assignmentStatus: assignment.status,
+      dueAt: assignment.dueAt,
     });
   } catch {
     return unauthorized();

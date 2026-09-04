@@ -1,15 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
+import {
+  PROGRESS_HOME,
+  companyCanAccessPath,
+  isAdminPublicPath,
+  isCompanyRole,
+  staffLoginPath,
+} from "@/lib/capacitacion/admin-access";
 import { getSessionFromMiddleware } from "@/lib/session";
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const response = NextResponse.next();
 
-  // Public auth endpoints and admin login page
-  if (
-    pathname.startsWith("/api/auth/") ||
-    pathname === "/capacitacion/admin/login"
-  ) {
+  // Public auth endpoints and staff login pages
+  if (pathname.startsWith("/api/auth/") || isAdminPublicPath(pathname)) {
     return response;
   }
 
@@ -28,9 +32,7 @@ export async function middleware(request: NextRequest) {
   const isAdminApi = pathname.startsWith("/api/admin/");
   const isCampusApi =
     pathname.startsWith("/api/campus/") || pathname.startsWith("/api/files/");
-  const isAdminPage =
-    pathname.startsWith("/capacitacion/admin") &&
-    pathname !== "/capacitacion/admin/login";
+  const isAdminPage = pathname.startsWith("/capacitacion/admin") && !isAdminPublicPath(pathname);
   const isCampusPage = pathname.startsWith("/capacitacion/campus");
 
   if (isAdminApi || isAdminPage) {
@@ -38,8 +40,18 @@ export async function middleware(request: NextRequest) {
       if (pathname.startsWith("/api/")) {
         return NextResponse.json({ error: "No autorizado" }, { status: 401 });
       }
-      const login = new URL("/capacitacion/admin/login", request.url);
+      const login = new URL(staffLoginPath(pathname), request.url);
+      const next = `${pathname}${request.nextUrl.search}`;
+      if (next.startsWith("/capacitacion/admin") && !isAdminPublicPath(pathname)) {
+        login.searchParams.set("next", next);
+      }
       return NextResponse.redirect(login);
+    }
+    if (isCompanyRole(session.adminRole) && !companyCanAccessPath(pathname, isAdminApi)) {
+      if (pathname.startsWith("/api/")) {
+        return NextResponse.json({ error: "No autorizado" }, { status: 403 });
+      }
+      return NextResponse.redirect(new URL(PROGRESS_HOME, request.url));
     }
     return response;
   }
@@ -47,7 +59,7 @@ export async function middleware(request: NextRequest) {
   if (isCampusApi || isCampusPage) {
     if (!session.studentId || !session.dni) {
       // Files may also be opened by admins previewing content
-      if (pathname.startsWith("/api/files/") && session.adminId) {
+      if (pathname.startsWith("/api/files/") && session.adminId && !isCompanyRole(session.adminRole)) {
         return response;
       }
       if (pathname.startsWith("/api/")) {

@@ -1,0 +1,430 @@
+================================================================================
+  ESPECIFICACIONES TECNICAS
+  Plataforma corporativa de capacitacion y matriz de competencias ï¿½ NOV
+  Elaborado por: DEVCEN Connected Systems
+  Documento tecnico de referencia (arquitectura de produccion)
+  Fecha: Agosto 2026
+================================================================================
+
+1. OBJETIVO DEL SISTEMA
+--------------------------------------------------------------------------------
+Plataforma web corporativa para:
+  - Capacitar personal de NOV en multiples sedes.
+  - Gestionar materiales (video, PDF, PowerPoint y archivos similares).
+  - Evaluar y emitir certificados digitales.
+  - Unificar el seguimiento de la matriz de competencias entre sedes.
+  - Alertar vencimientos en pantalla y, de forma opcional, por correo electronico.
+
+Alcance dimensionado:
+  - Aprox. 700 empleados / usuarios habilitados.
+  - Varias sedes / areas operativas.
+  - Entre 40 y 45 capacitaciones (con materiales multimedia).
+
+
+2. ARQUITECTURA GENERAL (PRODUCCION)
+--------------------------------------------------------------------------------
+Capa                         Tecnologia / servicio
+---------------------------  --------------------------------------------------
+Aplicacion web (UI + API)    Next.js 15 (App Router) + React 19 + TypeScript
+Estilos                      Tailwind CSS 4
+ORM / acceso a datos         Prisma
+Base de datos                PostgreSQL (produccion)
+Almacenamiento de archivos   Amazon Web Services ï¿½ S3
+Hosting de aplicacion        DigitalOcean Droplet
+                             4 vCPU ï¿½ 8 GB RAM ï¿½ 100 GB SSD
+HTTPS / dominio              Certificado TLS (Let's Encrypt o equivalente)
+Sesiones                     iron-session (cookies firmadas / cifradas)
+Validacion de datos          Zod
+Hash de contrasenas admin    bcryptjs
+Procesamiento de imagenes    Sharp
+Generacion de certificados   jsPDF
+Subida de archivos grandes   Multipart / chunks (hasta 1 GB por archivo)
+Envio de correos (opcional)  Proveedor SMTP / API transaccional
+                             (p. ej. Amazon SES u otro compatible)
+
+
+3. ENTORNOS
+--------------------------------------------------------------------------------
+3.1 Desarrollo local (actual)
+  - Next.js en modo desarrollo.
+  - Base de datos SQLite via Prisma (archivo local).
+  - Archivos en disco local (carpeta uploads/).
+
+3.2 Produccion (objetivo de esta especificacion)
+  - Next.js en modo produccion (build + start).
+  - PostgreSQL como base de datos persistente.
+  - Archivos multimedia y documentos en AWS S3.
+  - Servidor de aplicacion en DigitalOcean (specs arriba).
+  - Variables de entorno para secretos, DB, S3 y correo.
+
+
+4. MODULOS FUNCIONALES (LADO TECNICO)
+--------------------------------------------------------------------------------
+4.1 Acceso Campus (participantes)
+  - Acceso privado (clave de campus + DNI habilitado).
+  - Sesion de alumno.
+  - Perfil (nombre, email, telefono, empresa, etc.).
+  - Navegacion por salas / areas tematicas.
+  - Visualizacion de materiales, registro de avance.
+  - Evaluacion (quiz) con puntaje minimo configurable.
+  - Descarga de certificado PDF al aprobar.
+  - Visualizacion de alertas publicadas.
+
+4.2 Panel de administracion (capacitadores / HSE)
+  - Login de administrador (email + contrasena hasheada).
+  - Gestion de salas.
+  - Alta / edicion / publicacion de capacitaciones.
+  - Carga de materiales (video / archivo) y portadas.
+  - Definicion de preguntas y opciones de evaluacion.
+  - Gestion de DNIs habilitados (alta individual e importacion).
+  - Seguimiento de progreso y exportacion.
+  - Gestion de alertas (crear, editar, activar, vencer).
+  - Vista / dashboard de matriz de competencias (unificacion multi-sede).
+
+4.3 Matriz de competencias
+  - Estados: vigente / vencida / sin fecha.
+  - Filtros por area, rol, tarea, competencia, tipo de personal, sede.
+  - Objetivo: una sola fuente de verdad del cumplimiento entre sedes.
+  - Base para disparar recordatorios de vencimiento (modulo opcional).
+
+4.4 Alertas en plataforma
+  - Alertas informativas / de advertencia / criticas.
+  - Publicacion con fecha y eventual vencimiento de la alerta.
+  - Visibles en el campus para el personal autenticado.
+
+
+5. MODELO DE DATOS (ENTIDADES PRINCIPALES)
+--------------------------------------------------------------------------------
+Admin
+  - id, email (unico), passwordHash, createdAt
+
+Room (sala / area tematica)
+  - id, slug (unico), name
+  - Relacion: trainings[]
+
+Training (capacitacion)
+  - id, title, description, coverImage, roomId
+  - minPassScore (default 70), published
+  - materials[], questions[], progress[], attempts[]
+  - createdAt, updatedAt
+
+Material
+  - id, trainingId, type (video | file), title, fileUrl, sortOrder
+
+Question / QuestionOption
+  - Preguntas de evaluacion y opciones (isCorrect)
+
+AllowedDni
+  - dni (unico), enabled, createdAt
+
+Student
+  - dni (unico), datos de perfil, profileCompleted
+  - progress[], attempts[]
+
+TrainingProgress
+  - studentId + trainingId (unico)
+  - status (not_started | in_progress | completed | failed)
+  - score, materialsViewed (JSON), completedAt
+
+QuizAttempt
+  - Intentos de evaluacion por alumno / capacitacion
+
+Alert
+  - title, body, severity (info | warning | danger)
+  - active, publishedAt, expiresAt
+
+Extensiones previstas para produccion (matriz + mails):
+  CompetencyRequirement / CompetencyAssignment / CompetencyExpiry
+  - Relacion persona <-> competencia <-> vigencia <-> sede/area
+  - Campos de fecha de vencimiento y destinatarios de aviso
+
+  EmailReminderLog (si se activa el modulo de correos)
+  - destinatario, tipo de aviso, fecha de envio, estado, referencia
+
+
+6. BASE DE DATOS ï¿½ PostgreSQL
+--------------------------------------------------------------------------------
+Motor: PostgreSQL (produccion)
+
+Uso:
+  - Persistencia de usuarios, capacitaciones, avances, alertas y matriz.
+  - Integridad referencial (FK, cascadas segun modelo Prisma).
+  - Respaldos periodicos (dump logico o snapshot del proveedor).
+
+Configuracion tipica en el mismo Droplet o servicio gestionado:
+  - Encoding UTF-8.
+  - Conexion via DATABASE_URL (Prisma).
+  - Migraciones con Prisma Migrate en despliegue.
+
+Variables de entorno (ejemplo):
+  DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/nov_campus?schema=public"
+
+Notas operativas:
+  - Indices en campos de busqueda frecuente (dni, slug, trainingId, fechas
+    de vencimiento de competencias).
+  - Politica de backup diario recomendada + retencion minima 7-14 dias.
+  - En desarrollo local puede usarse SQLite; produccion = PostgreSQL.
+
+
+7. ALMACENAMIENTO ï¿½ AWS S3
+--------------------------------------------------------------------------------
+Servicio: Amazon Simple Storage Service (S3)
+
+Que se guarda en S3:
+  - Videos de capacitaciones.
+  - Documentos PDF, PowerPoint y otros archivos de material.
+  - Imagenes de portada / recursos asociados a cursos.
+  - (Opcional) certificados generados si se desea archivo persistente.
+
+Capacidad prevista:
+  - Dimensionada para 40 a 45 capacitaciones con material multimedia
+    y ~700 usuarios concurrentes/operativos (no todos a la vez).
+  - Crecimiento de almacenamiento: se monitorea y se ajusta el bucket /
+    la cuota segun consumo real.
+
+Organizacion sugerida de objetos (prefijos):
+  s3://<bucket-nov-campus>/
+    materials/<trainingId>/...
+    covers/<trainingId>/...
+    exports/...
+    certificates/...   (opcional)
+
+Seguridad:
+  - Bucket privado (sin listado publico).
+  - Acceso via credenciales IAM de la aplicacion (o rol).
+  - URLs firmadas (presigned) o proxy autenticado para descarga/streaming.
+  - Cifrado en reposo (SSE-S3 o SSE-KMS segun politica del cliente).
+
+Variables de entorno (ejemplo):
+  AWS_REGION="us-east-1"
+  AWS_ACCESS_KEY_ID="..."
+  AWS_SECRET_ACCESS_KEY="..."
+  AWS_S3_BUCKET="nov-campus-prod"
+
+Limites de subida (aplicacion):
+  - Subida por partes (chunks) de ~4 MB.
+  - Tamano maximo por archivo: hasta 1 GB (configurable).
+
+
+8. INFRAESTRUCTURA ï¿½ DIGITALOCEAN
+--------------------------------------------------------------------------------
+Droplet de aplicacion (produccion prevista):
+  - 4 vCPU
+  - 8 GB RAM
+  - 100 GB SSD
+  - Sistema operativo Linux (Ubuntu LTS recomendado)
+  - Proceso Node.js (Next.js) detras de reverse proxy (Nginx u otra)
+  - Firewall: solo puertos 80/443 (+ SSH restringido)
+
+Servicios en el mismo entorno o asociados:
+  - PostgreSQL (en el Droplet o managed DB).
+  - Conectividad saliente a AWS S3.
+  - Conectividad saliente al proveedor de correo (si esta activo).
+
+Monitoreo y operacion:
+  - HTTPS obligatorio.
+  - Logs de aplicacion y errores.
+  - Respaldos de base de datos.
+  - Actualizaciones de seguridad del SO y dependencias.
+
+
+9. MODULO OPCIONAL ï¿½ RECORDATORIOS POR CORREO
+--------------------------------------------------------------------------------
+Estado: OPCIONAL (se activa solo si el cliente lo contrata).
+
+Funcion:
+  - Enviar recordatorios automaticos por email a los destinatarios
+    correspondientes cuando una competencia o capacitacion:
+      a) esta por vencer (aviso preventivo), o
+      b) ya esta vencida (aviso de incumplimiento / renovacion).
+
+Sin este modulo:
+  - El seguimiento de vencidos permanece disponible en pantalla
+    (matriz / alertas).
+  - No se realizan envios automaticos de correo.
+
+Componentes tecnicos:
+  1) Motor de reglas de vencimiento
+     - Lee fechas de vigencia desde la matriz / asignaciones.
+     - Ventanas configurables (ej.: 30, 15, 7 y 0 dias).
+  2) Cola / job programado (cron)
+     - Ejecucion diaria (o segun configuracion acordada).
+     - Idempotencia: no reenviar el mismo aviso el mismo dia.
+  3) Plantillas de correo
+     - Asunto y cuerpo con datos: persona, competencia, sede, fecha.
+  4) Proveedor de envio
+     - Amazon SES (recomendado, coherente con AWS) u otro SMTP/API.
+  5) Registro de envios (EmailReminderLog)
+     - Auditoria: a quien, cuando, resultado (ok / error).
+
+Destinatarios posibles (configurables):
+  - El colaborador (si tiene email en perfil).
+  - Responsable de sede / area HSE.
+  - Lista adicional definida por NOV.
+
+Variables de entorno (ejemplo):
+  EMAIL_PROVIDER="ses" | "smtp"
+  EMAIL_FROM="noreply@dominio-nov.com"
+  EMAIL_REPLY_TO="hse@dominio-nov.com"
+  AWS_SES_REGION="..."          (si usa SES)
+  SMTP_HOST / SMTP_PORT / ...   (si usa SMTP)
+  REMINDER_CRON="0 8 * * *"     (ej.: 08:00 todos los dias)
+  REMINDER_ENABLED="true"
+
+Requisitos de operacion:
+  - Dominio con SPF / DKIM / DMARC configurados para entregabilidad.
+  - Limite de envios acorde al volumen (~700 personas, avisos periodicos).
+
+
+10. SEGURIDAD
+--------------------------------------------------------------------------------
+  - Separacion de roles: Admin vs Alumno.
+  - Sesiones con secreto fuerte (SESSION_SECRET).
+  - Contrasenas de admin hasheadas (bcrypt).
+  - Acceso campus con clave privada (CAMPUS_ACCESS_KEY) + DNI habilitado.
+  - Validacion de entradas (Zod) en APIs.
+  - Archivos privados (S3) sin exposicion publica directa.
+  - HTTPS en produccion.
+  - Principio de minimo privilegio en IAM (solo permisos S3/SES necesarios).
+  - No versionar secretos (.env fuera del repositorio).
+
+
+11. INTEGRACIONES Y APIS INTERNAS (RESUMEN)
+--------------------------------------------------------------------------------
+Auth
+  - POST /api/auth/admin/login | logout
+  - POST /api/auth/student/login | logout
+
+Admin
+  - CRUD salas, capacitaciones, alertas, alumnos/DNIs
+  - Importacion de DNIs
+  - Exportacion de progreso
+  - Upload de archivos (directo / por chunks)
+
+Campus
+  - Perfil, salas, capacitaciones, materiales (view)
+  - Quiz, certificado, alertas
+
+Archivos
+  - Servicio de lectura autenticada / firmada desde S3 (produccion)
+  - En local: filesystem uploads/
+
+
+12. CAPACIDAD Y RENDIMIENTO (REFERENCIA)
+--------------------------------------------------------------------------------
+Usuarios habilitados:           ~700
+Capacitaciones:                 40 a 45
+Concurrencia esperada:          uso laboral tipico (no masivo simultaneo)
+Archivo maximo por material:    hasta 1 GB
+Servidor app:                   4 vCPU / 8 GB RAM / 100 GB SSD
+DB:                             PostgreSQL
+Storage media:                  AWS S3 (crecimiento elastico)
+
+Si el volumen de video o de usuarios crece de forma extraordinaria,
+se redimensiona Droplet y/o se revisa politica de S3 / CDN.
+
+
+13. DESPLIEGUE (RESUMEN OPERATIVO)
+--------------------------------------------------------------------------------
+  1. Provisionar Droplet DigitalOcean (4/8/100).
+  2. Instalar Node.js LTS, Nginx, Certbot (HTTPS).
+  3. Provisionar PostgreSQL y aplicar migraciones Prisma.
+  4. Crear bucket S3 + usuario/rol IAM.
+  5. Configurar variables de entorno de produccion.
+  6. Build de la aplicacion (npm run build) y proceso supervisado
+     (systemd / pm2).
+  7. (Opcional) Activar cron de recordatorios + SES/SMTP.
+  8. Pruebas de go-live: login admin, login alumno, carga material,
+     evaluacion, certificado, matriz, mail de prueba.
+
+
+14. VARIABLES DE ENTORNO ï¿½ CHECKLIST PRODUCCION
+--------------------------------------------------------------------------------
+Obligatorias:
+  DATABASE_URL                  (PostgreSQL)
+  SESSION_SECRET
+  CAMPUS_ACCESS_KEY
+  ADMIN_EMAIL / ADMIN_PASSWORD  (bootstrap inicial)
+  AWS_REGION
+  AWS_ACCESS_KEY_ID
+  AWS_SECRET_ACCESS_KEY
+  AWS_S3_BUCKET
+
+Opcionales (modulo de recordatorios por mail):
+  REMINDER_ENABLED
+  REMINDER_CRON
+  EMAIL_PROVIDER / EMAIL_FROM / EMAIL_REPLY_TO
+  Credenciales SES o SMTP
+
+
+15. ENTREGABLES TECNICOS
+--------------------------------------------------------------------------------
+  - Codigo fuente de la aplicacion (propiedad segun modalidad comercial).
+  - Esquema Prisma + migraciones PostgreSQL.
+  - Configuracion de despliegue (servidor + reverse proxy + HTTPS).
+  - Bucket S3 operativo y politicas IAM minimas.
+  - Documentacion de operacion basica (este documento + runbook breve).
+  - Si se contrata: jobs de recordatorio + plantillas de correo + logs.
+
+
+16. INVERSION, SOPORTE, CORREOS Y BONIFICACIONES (ARS)
+--------------------------------------------------------------------------------
+Nota de infraestructura:
+  - NOV no dispone de un servidor propio. La opcion recomendada es el
+    alquiler con infraestructura a cargo de DEVCEN.
+
+Modalidad A — Alquiler (principal / recomendada):
+  - Implementacion (pago unico):            $ 34.000.000
+  - Abono mensual obligatorio (soporte):    $ 1.400.000
+  - DEVCEN asume DigitalOcean, AWS S3 y PostgreSQL.
+
+Modalidad B — Venta total del producto (cesion de derechos):
+  - Significa ceder a NOV los derechos acordados sobre la plataforma.
+  - Monto de venta / entrega de derechos:   A CONVENIR entre las partes.
+  - Soporte: NOV puede elegir soporte externo O contratar a DEVCEN.
+  - Soporte DEVCEN (opcional):              $ 800.000 / mes
+    (con infra DO / S3 / Postgres a cargo de DEVCEN).
+  - Sin soporte DEVCEN: NOV debe resolver hosting por su cuenta
+    (hoy no tiene servidor disponible).
+
+Recordatorios por correo (opcional):
+  - Implementacion del modulo:              GRATIS
+  - Costo de envios de mail:                A CARGO DE DEVCEN
+  - Bonificacion por ser el primer servicio contratado por NOV:
+    NOV no abona implementacion ni el gasto mensual de mails.
+
+Bonificaciones con soporte mensual activo:
+  - Disponibilidad 24/7 para incidencias criticas.
+  - Funcionalidades menores agregadas sin costo adicional.
+  - 30 % de bonificacion en la creacion de otras plataformas a futuro.
+  - Precio de soporte/alquiler congelado 12 meses desde el alta.
+  - Capacitacion operativa incluida en la puesta en marcha.
+  - Prioridad de atencion / canal directo con DEVCEN.
+  - Costos de mail a cargo de DEVCEN (primer servicio de NOV).
+
+17. PLAZOS Y MODALIDAD DE PAGO
+--------------------------------------------------------------------------------
+Plazo de terminacion de la plataforma:
+  - 45 dias corridos desde el acuerdo de creacion.
+
+Pago de la implementacion / venta:
+  - 50 % una vez acordada la creacion del proyecto.
+  - 50 % restante a los 15 dias de entregada / instalada la plataforma.
+
+Pago del soporte (y abono mensual de alquiler, si aplica):
+  - Por mes adelantado.
+  - El primer mes se abona al inicio del servicio.
+
+
+18. NOTAS
+--------------------------------------------------------------------------------
+  - Este documento describe la especificacion tecnica de produccion
+    alineada a la propuesta comercial NOV / DEVCEN.
+  - El entorno de desarrollo puede diferir (SQLite / disco local) sin
+    cambiar el alcance funcional de negocio.
+  - Cualquier cambio de alcance tecnico (nuevas integraciones, SSO,
+    CDN, alta concurrencia, etc.) se acuerda por escrito.
+
+================================================================================
+  Fin del documento - DEVCEN Connected Systems
+================================================================================

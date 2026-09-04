@@ -1,18 +1,38 @@
 @import "tailwindcss";
 
 @theme {
-  --color-brand-red: #ed3229;
-  --color-brand-red-dark: #c42720;
-  --color-brand-orange: #ed3229;
-  --color-brand-orange-dark: #c42720;
-  --color-brand-navy: #1e2126;
-  --color-brand-black: #121417;
-  --color-brand-gray: #61666e;
-  --color-brand-gray-light: #8b9098;
-  --color-brand-gray-bg: #f3f4f6;
-  --color-brand-dark: #2f333a;
+  --color-brand-red: #c42d26;
+  --color-brand-red-dark: #8f221c;
+  --color-brand-orange: #c42d26;
+  --color-brand-orange-dark: #8f221c;
+  --color-brand-navy: #1b2740;
+  --color-brand-black: #1b2740;
+  --color-brand-gray: #475569;
+  --color-brand-gray-light: #64748b;
+  --color-brand-gray-bg: #e2e8f0;
+  --color-brand-dark: #0f172a;
+  --color-paper: #eef2f7;
+  --color-paper-muted: #e2e8f0;
+  --color-paper-raised: #ffffff;
+  --color-surface: #eef2f7;
+  --color-surface-muted: #e2e8f0;
+  --color-surface-card: #ffffff;
+  --color-ink: #0f172a;
+  --color-ink-muted: #475569;
+  --color-rule: #cbd5e1;
+  --color-stock-expired: #fef2f2;
+  --color-stock-expired-ink: #b91c1c;
+  --color-stock-due: #fffbeb;
+  --color-stock-due-ink: #b45309;
+  --color-stock-valid: #ecfdf5;
+  --color-stock-valid-ink: #047857;
+  --color-stock-assigned: #eff6ff;
+  --color-stock-assigned-ink: #1d4ed8;
+  --color-accent-deep: #1b2740;
+  --color-accent-deeper: #0f172a;
   --font-sans: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-oswald), ui-sans-serif, system-ui, sans-serif;
+  --shadow-card: 0 18px 40px -24px rgb(15 23 42 / 0.28);
 }
 
 html {
@@ -20,24 +40,94 @@ html {
 }
 
 body {
-  background-color: var(--color-brand-navy);
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+}
+
+::selection {
+  background: #c42d26;
   color: #ffffff;
 }
 
-/*
- * Fuera de @layer para ganar a la herencia del body (color blanco).
- * Los logins oscuros ya usan bg-white + text-brand-dark.
- */
+:focus-visible {
+  outline: 2px solid #c42d26;
+  outline-offset: 2px;
+}
+
 input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]),
 textarea,
 select {
-  color: #2f333a !important;
-  caret-color: #2f333a !important;
+  color: var(--color-ink) !important;
+  caret-color: var(--color-ink) !important;
+  color-scheme: light;
 }
 
 input::placeholder,
 textarea::placeholder {
-  color: #8b9098 !important;
+  color: #5a6573 !important;
+}
+
+select option {
+  background-color: #ffffff;
+  color: #0f172a;
+}
+
+.campus-atmosphere {
+  contain: paint;
+}
+
+.campus-aurora {
+  position: absolute;
+  inset: -18%;
+  background:
+    radial-gradient(42% 38% at 18% 28%, rgb(196 45 38 / 0.2), transparent 62%),
+    radial-gradient(36% 42% at 82% 18%, rgb(14 165 233 / 0.18), transparent 60%),
+    radial-gradient(40% 36% at 72% 78%, rgb(13 148 136 / 0.16), transparent 58%),
+    radial-gradient(32% 30% at 14% 82%, rgb(245 158 11 / 0.16), transparent 55%);
+  animation: aurora-shift 28s ease-in-out infinite;
+  will-change: transform;
+}
+
+.campus-mesh {
+  background-image: radial-gradient(circle at 1px 1px, rgb(27 39 64 / 0.07) 1px, transparent 0);
+  background-size: 28px 28px;
+}
+
+.login-kenburns {
+  animation: kenburns 28s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+.hero-kenburns {
+  animation: kenburns 22s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+@keyframes aurora-shift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(3%, -2.5%, 0) scale(1.08);
+  }
+}
+
+@keyframes kenburns {
+  0% {
+    transform: scale(1) translate3d(0, 0, 0);
+  }
+  100% {
+    transform: scale(1.08) translate3d(-1.5%, -1%, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .campus-aurora,
+  .login-kenburns,
+  .hero-kenburns {
+    animation: none;
+  }
 }
 
 @keyframes slide-down-fade {
@@ -198,5 +288,147 @@ textarea::placeholder {
   .educator-book,
   .educator-eyes {
     animation: none;
+  }
+}
+
+/* Escena de capacitación — capacitador + operario (loop vectorial) */
+@keyframes crew-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes crew-ground-shadow {
+  0%,
+  100% {
+    transform: scaleX(1);
+    opacity: 0.45;
+  }
+  50% {
+    transform: scaleX(0.9);
+    opacity: 0.3;
+  }
+}
+
+@keyframes crew-point {
+  0%,
+  100% {
+    transform: rotate(-2.5deg);
+  }
+  50% {
+    transform: rotate(2.5deg);
+  }
+}
+
+@keyframes crew-nod {
+  0%,
+  62%,
+  100% {
+    transform: rotate(0deg);
+  }
+  72% {
+    transform: rotate(5deg);
+  }
+  84% {
+    transform: rotate(-1deg);
+  }
+}
+
+@keyframes crew-clip {
+  0%,
+  100% {
+    transform: rotate(-2deg);
+  }
+  50% {
+    transform: rotate(3deg);
+  }
+}
+
+@keyframes crew-check {
+  0% {
+    stroke-dashoffset: 20;
+    opacity: 0;
+  }
+  8% {
+    opacity: 1;
+  }
+  24%,
+  84% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  95%,
+  100% {
+    stroke-dashoffset: 20;
+    opacity: 0;
+  }
+}
+
+.crew-a {
+  animation: crew-bob 3.4s ease-in-out infinite;
+  transform-box: fill-box;
+}
+
+.crew-b {
+  animation: crew-bob 3.9s ease-in-out infinite;
+  animation-delay: 0.4s;
+  transform-box: fill-box;
+}
+
+.crew-shadow-a {
+  animation: crew-ground-shadow 3.4s ease-in-out infinite;
+  transform-origin: center;
+  transform-box: fill-box;
+}
+
+.crew-shadow-b {
+  animation: crew-ground-shadow 3.9s ease-in-out infinite;
+  animation-delay: 0.4s;
+  transform-origin: center;
+  transform-box: fill-box;
+}
+
+.crew-point {
+  animation: crew-point 3.6s ease-in-out infinite;
+  transform-origin: 76px 108px;
+  transform-box: view-box;
+}
+
+.crew-nod {
+  animation: crew-nod 4.6s ease-in-out infinite;
+  transform-origin: 258px 92px;
+  transform-box: view-box;
+}
+
+.crew-clip {
+  animation: crew-clip 4.2s ease-in-out infinite;
+  transform-origin: 231px 132px;
+  transform-box: view-box;
+}
+
+.crew-check {
+  stroke-dasharray: 20;
+  stroke-dashoffset: 20;
+  animation: crew-check 5.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .crew-a,
+  .crew-b,
+  .crew-shadow-a,
+  .crew-shadow-b,
+  .crew-point,
+  .crew-nod,
+  .crew-clip,
+  .crew-check {
+    animation: none;
+  }
+
+  .crew-check {
+    stroke-dashoffset: 0;
   }
 }

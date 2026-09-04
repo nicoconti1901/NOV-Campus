@@ -7,6 +7,8 @@ import { requireStudentPage } from "@/lib/capacitacion/auth-guards";
 import { getRoomTheme } from "@/lib/capacitacion/rooms";
 import { TrainingCard } from "@/components/capacitacion/TrainingCard";
 
+export const dynamic = "force-dynamic";
+
 export default async function SalaPage({
   params,
 }: {
@@ -18,11 +20,18 @@ export default async function SalaPage({
   const student = await prisma.student.findUnique({ where: { id: session.studentId } });
   if (!student?.profileCompleted) redirect("/capacitacion/campus/perfil");
 
+  const assigned = await prisma.trainingAssignment.findMany({
+    where: { studentId: session.studentId, training: { published: true, room: { slug } } },
+    select: { trainingId: true, status: true, dueAt: true },
+  });
+  const assignedIds = assigned.map((a) => a.trainingId);
+  const dueByTraining = new Map(assigned.map((a) => [a.trainingId, a]));
+
   const room = await prisma.room.findUnique({
     where: { slug },
     include: {
       trainings: {
-        where: { published: true },
+        where: { published: true, id: { in: assignedIds.length ? assignedIds : ["__none__"] } },
         include: { progress: { where: { studentId: session.studentId } } },
         orderBy: { title: "asc" },
       },
@@ -38,13 +47,13 @@ export default async function SalaPage({
     <div>
       <Link
         href="/capacitacion/campus"
-        className="inline-flex items-center gap-1.5 rounded-lg bg-white/80 px-3 py-1.5 text-sm font-medium text-brand-gray shadow-sm ring-1 ring-white/60 backdrop-blur-sm transition-colors hover:text-brand-red"
+        className="inline-flex items-center gap-1.5 rounded-lg bg-surface-muted px-3 py-1.5 text-sm font-medium text-brand-gray shadow-sm border border-black/8 backdrop-blur-sm transition-colors hover:text-brand-red"
       >
         <ChevronLeft className="h-4 w-4" />
         Volver a salas
       </Link>
 
-      <div className="mt-6 overflow-hidden rounded-3xl bg-white/90 shadow-xl ring-1 ring-white/60 backdrop-blur-sm">
+      <div className="mt-6 overflow-hidden rounded-3xl bg-surface shadow-xl border border-black/8 backdrop-blur-sm">
         <div className="relative h-44 sm:h-52">
           <Image
             src={theme.coverImage}
@@ -61,8 +70,8 @@ export default async function SalaPage({
                 <Icon className="h-7 w-7 text-white" />
               </div>
               <div>
-                <p className="text-xs font-semibold uppercase tracking-widest text-white/70">Sala temática</p>
-                <h2 className="text-2xl font-bold text-white sm:text-3xl">{room.name}</h2>
+                <p className="text-xs font-semibold uppercase tracking-widest text-white/75">Sala temática</p>
+                <h2 className="font-display text-2xl font-semibold text-white sm:text-3xl">{room.name}</h2>
                 <p className="mt-1 text-sm text-white/85">
                   {room.trainings.length} capacitación{room.trainings.length !== 1 ? "es" : ""} disponible
                   {room.trainings.length !== 1 ? "s" : ""}
@@ -75,7 +84,7 @@ export default async function SalaPage({
         <div className="space-y-4 p-6 sm:p-8">
           {room.trainings.length === 0 ? (
             <div className="rounded-2xl bg-brand-gray-bg/50 p-8 text-center">
-              <p className="text-brand-gray">No hay capacitaciones publicadas en esta sala.</p>
+              <p className="text-brand-gray">No tenés capacitaciones asignadas en esta sala.</p>
             </div>
           ) : (
             room.trainings.map((t) => {
@@ -87,8 +96,17 @@ export default async function SalaPage({
                   title={t.title}
                   description={t.description}
                   coverImage={t.coverImage}
-                  status={progress?.status ?? "not_started"}
+                  status={
+                    dueByTraining.get(t.id)?.status === "expired"
+                      ? "expired"
+                      : progress?.status ?? "not_started"
+                  }
                   score={progress?.score}
+                  dueLabel={
+                    dueByTraining.get(t.id)
+                      ? `Vence ${dueByTraining.get(t.id)!.dueAt.toLocaleDateString("es-AR")}`
+                      : undefined
+                  }
                 />
               );
             })

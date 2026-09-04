@@ -16,6 +16,13 @@ export const materialSchema = z.object({
   fileUrl: z.string().min(1),
 });
 
+export const trainingScopeSchema = z.object({
+  sedeId: z.string().min(1),
+  puestoId: z.string().min(1),
+  tareaId: z.string().min(1),
+  validityDays: z.number().int().min(1).max(3650),
+});
+
 export const trainingCreateSchema = z.object({
   title: z.string().min(3),
   description: z.string().optional(),
@@ -23,6 +30,8 @@ export const trainingCreateSchema = z.object({
   roomId: z.string().min(1),
   minPassScore: z.number().min(1).max(100),
   published: z.boolean().optional(),
+  validityDays: z.number().int().min(1).max(3650).optional(),
+  scope: trainingScopeSchema,
   materials: z.array(materialSchema).default([]),
   questions: z.array(questionSchema).min(1),
 });

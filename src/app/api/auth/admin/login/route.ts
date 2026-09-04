@@ -21,11 +21,12 @@ export async function POST(request: NextRequest) {
 
     const session = await getSession();
     session.adminId = admin.id;
+    session.adminRole = admin.role;
     session.studentId = undefined;
     session.dni = undefined;
     await session.save();
 
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, role: admin.role });
   } catch {
     return apiError("Datos inválidos");
   }
