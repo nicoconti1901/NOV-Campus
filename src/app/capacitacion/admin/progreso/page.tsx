@@ -147,7 +147,7 @@ export default async function AdminProgressPage({
 
   return (
     <div className="space-y-6">
-      <section className="overflow-hidden rounded-3xl bg-brand-navy text-paper shadow-[0_24px_60px_-28px_rgba(15,23,42,0.55)]">
+      <section className="overflow-hidden rounded-3xl bg-brand-navy text-paper shadow-[0_24px_60px_-28px_rgba(15,23,42,0.55)]" data-tour="progress-kpis">
         <div className="flex flex-wrap items-start justify-between gap-6 px-6 py-7 sm:px-8">
           <div className="max-w-xl">
             <p className="font-display text-[11px] font-semibold uppercase tracking-[0.22em] text-sky-200">

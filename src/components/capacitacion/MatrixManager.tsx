@@ -88,7 +88,7 @@ export function MatrixManager() {
 
   return (
     <div className="space-y-6">
-      <section className="overflow-hidden rounded-3xl border border-rule bg-paper-raised">
+      <section data-tour="matriz-form" className="overflow-hidden rounded-3xl border border-rule bg-paper-raised">
         <div className="flex items-start gap-4 border-b border-rule px-6 py-5 sm:px-8">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-rule bg-paper-muted text-ink">
             <Plus className="h-6 w-6" />

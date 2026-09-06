@@ -141,8 +141,13 @@ export function CampusAssignmentBoard({ items }: { items: CampusBoardItem[] }) {
   const visible = room === "todas" ? inTab : inTab.filter((item) => item.roomName === room);
 
   return (
-    <section className="space-y-4">
-      <div role="tablist" aria-label="Estado de tus capacitaciones" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+    <section className="space-y-4" data-tour="campus-assignments">
+      <div
+        role="tablist"
+        aria-label="Estado de tus capacitaciones"
+        data-tour="campus-status-tabs"
+        className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4"
+      >
         {TABS.map((item, index) => {
           const selected = item.id === tab;
           const Icon = item.icon;

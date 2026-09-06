@@ -226,165 +226,176 @@ export function TrainingForm({ rooms, directory, initial }: Props) {
       <section className={formPanelClass}>
         <span className="absolute inset-x-0 top-0 h-1 bg-linear-to-r from-brand-navy via-brand-red to-teal-500" />
         <h3 className={formPanelTitleClass}>Datos generales</h3>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          <div className="sm:col-span-2">
-            <label className={formLabelClass}>Título</label>
-            <input
-              required
-              value={form.title}
-              onChange={(e) => setForm({ ...form, title: e.target.value })}
-              className={fieldClass}
-            />
-          </div>
-          <div className="sm:col-span-2">
-            <label className={formLabelClass}>Descripción</label>
-            <textarea
-              rows={3}
-              value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
-              className={fieldClass}
-            />
-          </div>
+        <div className="mt-4 space-y-4">
+          <div data-tour="training-basics" className="grid gap-4 sm:grid-cols-2">
+            <div className="sm:col-span-2">
+              <label className={formLabelClass}>Título</label>
+              <input
+                required
+                value={form.title}
+                onChange={(e) => setForm({ ...form, title: e.target.value })}
+                className={fieldClass}
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <label className={formLabelClass}>Descripción</label>
+              <textarea
+                rows={3}
+                value={form.description}
+                onChange={(e) => setForm({ ...form, description: e.target.value })}
+                className={fieldClass}
+              />
+            </div>
 
-          <div className="sm:col-span-2">
-            <label className={formLabelClass}>Imagen representativa del curso</label>
-            <p className={`mb-3 ${formHintClass}`}>
-              Opcional. Se muestra al alumno y reemplaza la imagen de la sala en el certificado.
-            </p>
-            {form.coverImage ? (
-              <div className="flex flex-wrap items-start gap-4">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={form.coverImage}
-                  alt="Portada del curso"
-                  className="h-28 w-44 rounded-xl object-cover ring-1 ring-white/15"
-                />
-                <div className="flex flex-col gap-2">
-                  <label className={formDashedBtnClass}>
-                    <Upload className="h-4 w-4" />
-                    Cambiar imagen
-                    <input
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp"
-                      className="hidden"
-                      onChange={handleCoverUpload}
-                    />
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => setForm({ ...form, coverImage: null })}
-                    className="inline-flex items-center gap-2 text-sm font-semibold text-brand-red"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    Quitar imagen
-                  </button>
+            <div className="sm:col-span-2">
+              <label className={formLabelClass}>Imagen representativa del curso</label>
+              <p className={`mb-3 ${formHintClass}`}>
+                Opcional. Se muestra al alumno y reemplaza la imagen de la sala en el certificado.
+              </p>
+              {form.coverImage ? (
+                <div className="flex flex-wrap items-start gap-4">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={form.coverImage}
+                    alt="Portada del curso"
+                    className="h-28 w-44 rounded-xl object-cover ring-1 ring-white/15"
+                  />
+                  <div className="flex flex-col gap-2">
+                    <label className={formDashedBtnClass}>
+                      <Upload className="h-4 w-4" />
+                      Cambiar imagen
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        className="hidden"
+                        onChange={handleCoverUpload}
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setForm({ ...form, coverImage: null })}
+                      className="inline-flex items-center gap-2 text-sm font-semibold text-brand-red"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Quitar imagen
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <label className={formDashedBtnClass}>
-                <ImageIcon className="h-4 w-4" />
-                {uploadingCover ? "Subiendo..." : "Subir imagen del curso"}
-                <input
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  className="hidden"
-                  onChange={handleCoverUpload}
-                  disabled={uploadingCover}
-                />
-              </label>
-            )}
+              ) : (
+                <label className={formDashedBtnClass}>
+                  <ImageIcon className="h-4 w-4" />
+                  {uploadingCover ? "Subiendo..." : "Subir imagen del curso"}
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="hidden"
+                    onChange={handleCoverUpload}
+                    disabled={uploadingCover}
+                  />
+                </label>
+              )}
+            </div>
           </div>
 
-          <div>
-            <label className={formLabelClass}>Sala</label>
-            <select
-              required
-              value={form.roomId}
-              onChange={(e) => setForm({ ...form, roomId: e.target.value })}
-              className={fieldClass}
-            >
-              {rooms.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.name}
-                </option>
-              ))}
-            </select>
+          <div data-tour="training-rules-block" className="grid gap-4 sm:grid-cols-2">
+            <div data-tour="training-rules-sala">
+              <label className={formLabelClass}>Sala</label>
+              <select
+                required
+                value={form.roomId}
+                onChange={(e) => setForm({ ...form, roomId: e.target.value })}
+                className={fieldClass}
+              >
+                {rooms.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div data-tour="training-rules-score">
+              <label className={formLabelClass}>
+                Puntaje mínimo de aprobación (%)
+              </label>
+              <input
+                type="number"
+                min={1}
+                max={100}
+                required
+                value={form.minPassScore}
+                onChange={(e) => setForm({ ...form, minPassScore: Number(e.target.value) })}
+                className={fieldClass}
+              />
+            </div>
+            <div data-tour="training-rules-validity" className="sm:col-span-2 sm:max-w-xs">
+              <label className={formLabelClass}>Vigencia (días)</label>
+              <input
+                type="number"
+                min={1}
+                max={3650}
+                required
+                value={form.validityDays}
+                onChange={(e) => setForm({ ...form, validityDays: Number(e.target.value) })}
+                className={fieldClass}
+              />
+            </div>
           </div>
-          <div>
-            <label className={formLabelClass}>
-              Puntaje mínimo de aprobación (%)
-            </label>
-            <input
-              type="number"
-              min={1}
-              max={100}
-              required
-              value={form.minPassScore}
-              onChange={(e) => setForm({ ...form, minPassScore: Number(e.target.value) })}
-              className={fieldClass}
-            />
+
+          <div data-tour="training-scope-block" className="grid gap-4 sm:grid-cols-2">
+            <div data-tour="training-scope">
+              <label className={formLabelClass}>Sector / sede</label>
+              <select
+                required
+                value={form.sedeId}
+                onChange={(e) => setForm({ ...form, sedeId: e.target.value })}
+                className={fieldClass}
+              >
+                {directory.sedes.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div data-tour="training-scope-puesto">
+              <label className={formLabelClass}>Puesto</label>
+              <select
+                required
+                value={form.puestoId}
+                onChange={(e) => setForm({ ...form, puestoId: e.target.value })}
+                className={fieldClass}
+              >
+                {directory.puestos.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div data-tour="training-scope-tarea">
+              <label className={formLabelClass}>Tarea</label>
+              <select
+                required
+                value={form.tareaId}
+                onChange={(e) => setForm({ ...form, tareaId: e.target.value })}
+                className={fieldClass}
+              >
+                {directory.tareas.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.name}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
-          <div>
-            <label className={formLabelClass}>Vigencia (días)</label>
-            <input
-              type="number"
-              min={1}
-              max={3650}
-              required
-              value={form.validityDays}
-              onChange={(e) => setForm({ ...form, validityDays: Number(e.target.value) })}
-              className={fieldClass}
-            />
-          </div>
-          <div>
-            <label className={formLabelClass}>Sector / sede</label>
-            <select
-              required
-              value={form.sedeId}
-              onChange={(e) => setForm({ ...form, sedeId: e.target.value })}
-              className={fieldClass}
-            >
-              {directory.sedes.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className={formLabelClass}>Puesto</label>
-            <select
-              required
-              value={form.puestoId}
-              onChange={(e) => setForm({ ...form, puestoId: e.target.value })}
-              className={fieldClass}
-            >
-              {directory.puestos.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className={formLabelClass}>Tarea</label>
-            <select
-              required
-              value={form.tareaId}
-              onChange={(e) => setForm({ ...form, tareaId: e.target.value })}
-              className={fieldClass}
-            >
-              {directory.tareas.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <p className={`sm:col-span-2 ${formHintClass}`}>
+          <p className={formHintClass} data-tour="training-scope-hint">
             El alcance es obligatorio. La capacitación impacta solo a alumnos de esa celda (puesto × tarea × sede).
           </p>
-          <label className="flex items-center gap-2 text-sm text-ink-muted sm:col-span-2">
+
+          <label
+            data-tour="training-publish"
+            className="flex items-center gap-2 text-sm text-ink-muted"
+          >
             <input
               type="checkbox"
               checked={form.published}

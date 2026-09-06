@@ -117,7 +117,7 @@ export default async function AdminDashboardPage() {
       </div>
 
       {/* Stats */}
-      <section>
+      <section data-tour="admin-stats">
         <p className="mb-4 font-display text-sm font-semibold uppercase tracking-[0.12em] text-ink">
           Resumen general
         </p>

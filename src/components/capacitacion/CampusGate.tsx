@@ -112,6 +112,7 @@ export function CampusGate({ studentLoginHref }: Props) {
               <Link
                 key={item.key}
                 href={href}
+                data-tour={`portal-${item.key}`}
                 className={`group relative overflow-hidden rounded-2xl px-5 py-5 ring-1 shadow-sm transition-transform hover:-translate-y-0.5 ${item.card}`}
               >
                 <span className={`absolute inset-y-0 left-0 w-1 bg-linear-to-b ${item.rail}`} />
