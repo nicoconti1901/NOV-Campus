@@ -7,7 +7,8 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminMatrixPage() {
   await requireAdminPage();
-  await ensureCatalogCellsOnPublishedMatrix();
+  // Sin sync masivo de alumnos en el GET (eso bloqueaba la página por minutos).
+  await ensureCatalogCellsOnPublishedMatrix({ syncStudents: false });
 
   return (
     <div className="space-y-8">

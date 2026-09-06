@@ -15,10 +15,7 @@ import {
   CampusAssignmentBoard,
   type CampusBoardItem,
 } from "@/components/capacitacion/CampusAssignmentBoard";
-import {
-  getStudentAssignmentViews,
-  syncStudentAssignments,
-} from "@/lib/capacitacion/matrix-service";
+import { getStudentAssignmentViews } from "@/lib/capacitacion/matrix-service";
 import { daysUntil } from "@/lib/capacitacion/matrix-engine";
 
 export const dynamic = "force-dynamic";
@@ -49,7 +46,7 @@ export default async function CampusPage() {
     redirect("/capacitacion/campus/perfil");
   }
 
-  await syncStudentAssignments(student.id);
+  // Sync solo al completar/editar perfil o al aplicar alcance en admin — no en cada visita.
   const assignments = await getStudentAssignmentViews(student.id);
 
   const now = new Date();
@@ -81,7 +78,10 @@ export default async function CampusPage() {
 
   return (
     <div className="space-y-8">
-      <section className="relative overflow-hidden rounded-3xl bg-white/80 ring-1 ring-slate-200/80 shadow-[0_18px_40px_-24px_rgba(15,23,42,0.28)] backdrop-blur-xl">
+      <section
+        data-tour="campus-profile"
+        className="relative overflow-hidden rounded-3xl bg-white/80 ring-1 ring-slate-200/80 shadow-[0_18px_40px_-24px_rgba(15,23,42,0.28)] backdrop-blur-xl"
+      >
         <span className="absolute inset-x-0 top-0 h-1 bg-linear-to-r from-brand-navy via-brand-red to-teal-500" />
         <div className="flex flex-col gap-5 px-5 py-6 sm:flex-row sm:items-start sm:justify-between sm:px-7">
           <div className="min-w-0">

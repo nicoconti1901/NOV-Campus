@@ -3,7 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/session";
 import { apiError, unauthorized } from "@/lib/api";
-import { applyScopeToPublishedMatrix, getProgressKpis } from "@/lib/capacitacion/matrix-service";
+import { applyScopeToPublishedMatrix } from "@/lib/capacitacion/matrix-service";
 
 export async function GET() {
   try {
@@ -12,29 +12,28 @@ export async function GET() {
     return unauthorized();
   }
 
-  const [matrix, kpis] = await Promise.all([
-    prisma.annualMatrix.findFirst({
-      where: { status: "published" },
-      orderBy: { year: "desc" },
-      include: {
-        cells: {
-          include: {
-            sede: true,
-            puesto: true,
-            tarea: true,
-            items: {
-              include: { training: { select: { id: true, title: true, published: true } } },
-            },
-            _count: { select: { assignments: true } },
+  // MatrixManager solo usa `matrix`; getProgressKpis() cargaba todas las asignaciones
+  // y hacía esta ruta varios segundos más lenta sin beneficio en UI.
+  const matrix = await prisma.annualMatrix.findFirst({
+    where: { status: "published" },
+    orderBy: { year: "desc" },
+    include: {
+      cells: {
+        include: {
+          sede: true,
+          puesto: true,
+          tarea: true,
+          items: {
+            include: { training: { select: { id: true, title: true, published: true } } },
           },
-          orderBy: { id: "asc" },
+          _count: { select: { assignments: true } },
         },
+        orderBy: { id: "asc" },
       },
-    }),
-    getProgressKpis(),
-  ]);
+    },
+  });
 
-  return NextResponse.json({ matrix, kpis });
+  return NextResponse.json({ matrix });
 }
 
 const cellSchema = z.object({

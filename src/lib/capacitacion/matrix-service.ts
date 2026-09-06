@@ -112,14 +112,72 @@ export async function applyScopeToPublishedMatrix(input: {
     select: { id: true },
   });
 
-  for (const student of students) {
-    await upsertAssignment({
-      studentId: student.id,
-      trainingId: input.trainingId,
-      matrixId: matrix.id,
-      cellId: cell.id,
-      validityDays: input.validityDays,
+  if (students.length > 0) {
+    const now = new Date();
+    const existing = await prisma.trainingAssignment.findMany({
+      where: {
+        trainingId: input.trainingId,
+        matrixId: matrix.id,
+        studentId: { in: students.map((s) => s.id) },
+      },
     });
+    const existingByStudent = new Map(existing.map((row) => [row.studentId, row]));
+    const toCreate: Array<{
+      studentId: string;
+      trainingId: string;
+      matrixId: string;
+      cellId: string;
+      validityDays: number;
+      status: string;
+      assignedAt: Date;
+      dueAt: Date;
+    }> = [];
+    const toUpdate: Array<{ id: string; cellId: string; validityDays: number; dueAt: Date }> = [];
+
+    for (const student of students) {
+      const current = existingByStudent.get(student.id);
+      if (!current) {
+        toCreate.push({
+          studentId: student.id,
+          trainingId: input.trainingId,
+          matrixId: matrix.id,
+          cellId: cell.id,
+          validityDays: input.validityDays,
+          status: ASSIGNMENT_STATUS.ASSIGNED,
+          assignedAt: now,
+          dueAt: dueAtFromAssigned(now, input.validityDays),
+        });
+        continue;
+      }
+      if (current.cellId === cell.id && current.validityDays === input.validityDays) continue;
+      toUpdate.push({
+        id: current.id,
+        cellId: cell.id,
+        validityDays: input.validityDays,
+        dueAt:
+          current.status === ASSIGNMENT_STATUS.COMPLETED && current.completedAt
+            ? dueAtFromCompleted(current.completedAt, input.validityDays)
+            : current.dueAt,
+      });
+    }
+
+    if (toCreate.length > 0 || toUpdate.length > 0) {
+      await prisma.$transaction([
+        ...(toCreate.length > 0
+          ? [prisma.trainingAssignment.createMany({ data: toCreate })]
+          : []),
+        ...toUpdate.map((row) =>
+          prisma.trainingAssignment.update({
+            where: { id: row.id },
+            data: {
+              cellId: row.cellId,
+              validityDays: row.validityDays,
+              dueAt: row.dueAt,
+            },
+          })
+        ),
+      ]);
+    }
   }
 
   return { skipped: false as const, cellId: cell.id, impacted: students.length };
@@ -241,7 +299,10 @@ export async function syncStudentAssignments(studentId: string, now = new Date()
   return { synced: toCreate.length + toUpdate.length };
 }
 
-export async function ensureCatalogCellsOnPublishedMatrix() {
+export async function ensureCatalogCellsOnPublishedMatrix(options?: {
+  syncStudents?: boolean;
+}) {
+  const syncStudents = options?.syncStudents ?? false;
   const matrix = await getPublishedMatrix();
   if (!matrix) return { created: 0, syncedStudents: 0 };
 
@@ -263,8 +324,11 @@ export async function ensureCatalogCellsOnPublishedMatrix() {
   const trainingByCode = new Map(
     trainings.filter((item) => item.code).map((item) => [item.code as string, item.id])
   );
+  const topicByCode = new Map(MATRIX_TOPICS.map((item) => [item.code, item]));
 
   let created = 0;
+  const scopeOps: Array<ReturnType<typeof prisma.trainingScope.upsert>> = [];
+  const itemOps: Array<ReturnType<typeof prisma.matrixCellItem.upsert>> = [];
 
   for (const def of MATRIX_CELLS) {
     const sedeId = sedeByCode.get(def.sedeCode);
@@ -283,23 +347,39 @@ export async function ensureCatalogCellsOnPublishedMatrix() {
 
     for (const topicCode of def.topicCodes) {
       const trainingId = trainingByCode.get(topicCode);
-      const topic = MATRIX_TOPICS.find((item) => item.code === topicCode);
+      const topic = topicByCode.get(topicCode);
       if (!trainingId || !topic) continue;
 
-      await prisma.trainingScope.upsert({
-        where: {
-          trainingId_sedeId_puestoId_tareaId: { trainingId, sedeId, puestoId, tareaId },
-        },
-        update: { validityDays: topic.validityDays },
-        create: { trainingId, sedeId, puestoId, tareaId, validityDays: topic.validityDays },
-      });
+      scopeOps.push(
+        prisma.trainingScope.upsert({
+          where: {
+            trainingId_sedeId_puestoId_tareaId: { trainingId, sedeId, puestoId, tareaId },
+          },
+          update: { validityDays: topic.validityDays },
+          create: { trainingId, sedeId, puestoId, tareaId, validityDays: topic.validityDays },
+        })
+      );
 
-      await prisma.matrixCellItem.upsert({
-        where: { cellId_trainingId: { cellId: cell.id, trainingId } },
-        update: { validityDays: topic.validityDays },
-        create: { cellId: cell.id, trainingId, validityDays: topic.validityDays },
-      });
+      itemOps.push(
+        prisma.matrixCellItem.upsert({
+          where: { cellId_trainingId: { cellId: cell.id, trainingId } },
+          update: { validityDays: topic.validityDays },
+          create: { cellId: cell.id, trainingId, validityDays: topic.validityDays },
+        })
+      );
     }
+  }
+
+  const batchSize = 40;
+  for (let i = 0; i < scopeOps.length; i += batchSize) {
+    await prisma.$transaction(scopeOps.slice(i, i + batchSize));
+  }
+  for (let i = 0; i < itemOps.length; i += batchSize) {
+    await prisma.$transaction(itemOps.slice(i, i + batchSize));
+  }
+
+  if (!syncStudents) {
+    return { created, syncedStudents: 0 };
   }
 
   const students = await prisma.student.findMany({
@@ -311,54 +391,6 @@ export async function ensureCatalogCellsOnPublishedMatrix() {
   }
 
   return { created, syncedStudents: students.length };
-}
-
-async function upsertAssignment(input: {
-  studentId: string;
-  trainingId: string;
-  matrixId: string;
-  cellId: string;
-  validityDays: number;
-  now?: Date;
-}) {
-  const now = input.now ?? new Date();
-  const existing = await prisma.trainingAssignment.findUnique({
-    where: {
-      studentId_trainingId_matrixId: {
-        studentId: input.studentId,
-        trainingId: input.trainingId,
-        matrixId: input.matrixId,
-      },
-    },
-  });
-
-  if (!existing) {
-    await prisma.trainingAssignment.create({
-      data: {
-        studentId: input.studentId,
-        trainingId: input.trainingId,
-        matrixId: input.matrixId,
-        cellId: input.cellId,
-        validityDays: input.validityDays,
-        status: ASSIGNMENT_STATUS.ASSIGNED,
-        assignedAt: now,
-        dueAt: dueAtFromAssigned(now, input.validityDays),
-      },
-    });
-    return;
-  }
-
-  await prisma.trainingAssignment.update({
-    where: { id: existing.id },
-    data: {
-      cellId: input.cellId,
-      validityDays: input.validityDays,
-      dueAt:
-        existing.status === ASSIGNMENT_STATUS.COMPLETED && existing.completedAt
-          ? dueAtFromCompleted(existing.completedAt, input.validityDays)
-          : existing.dueAt,
-    },
-  });
 }
 
 export async function completeAssignment(studentId: string, trainingId: string, now = new Date()) {
@@ -379,10 +411,35 @@ export async function completeAssignment(studentId: string, trainingId: string, 
 }
 
 export async function scanAssignmentExpiries(now = new Date(), studentId?: string) {
+  // Solo candidatos: vencidos no marcados, o dentro de la ventana de avisos (30 días).
+  const noticeHorizon = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
   const open = await prisma.trainingAssignment.findMany({
     where: {
-      status: { not: ASSIGNMENT_STATUS.EXPIRED },
       ...(studentId ? { studentId } : {}),
+      OR: [
+        {
+          status: { not: ASSIGNMENT_STATUS.EXPIRED },
+          dueAt: { lte: now },
+        },
+        {
+          dueAt: { lte: now },
+          noticeExpiredAt: null,
+        },
+        {
+          dueAt: { gt: now, lte: noticeHorizon },
+          OR: [{ notice30At: null }, { notice7At: null }, { notice1At: null }],
+        },
+      ],
+    },
+    select: {
+      id: true,
+      status: true,
+      dueAt: true,
+      completedAt: true,
+      notice30At: true,
+      notice7At: true,
+      notice1At: true,
+      noticeExpiredAt: true,
     },
   });
 
@@ -462,15 +519,28 @@ export async function getStudentAssignmentViews(
   studentId: string,
   now = new Date()
 ): Promise<StudentAssignmentView[]> {
-  await scanAssignmentExpiries(now, studentId);
-
+  // classifyAssignment ya deriva vencidos/por vencer en lectura; no hace falta
+  // reescribir avisos/expiraciones en cada visita al campus.
   const assignments = await prisma.trainingAssignment.findMany({
     where: { studentId, training: { published: true } },
-    include: {
+    select: {
+      id: true,
+      trainingId: true,
+      status: true,
+      dueAt: true,
+      completedAt: true,
+      validityDays: true,
       training: {
-        include: {
+        select: {
+          title: true,
+          description: true,
+          coverImage: true,
           room: { select: { name: true, slug: true } },
-          progress: { where: { studentId }, take: 1 },
+          progress: {
+            where: { studentId },
+            take: 1,
+            select: { score: true, status: true },
+          },
         },
       },
     },
@@ -523,25 +593,30 @@ export type SedeProgressRow = {
 };
 
 export async function getProgressKpis() {
-  await scanAssignmentExpiries();
-
+  // Clasificación en lectura (sin scan de escritura). Select mínimo para KPIs + tabla.
   const [sedes, assignments, published] = await Promise.all([
-    prisma.sede.findMany({ orderBy: { name: "asc" } }),
+    prisma.sede.findMany({
+      orderBy: { name: "asc" },
+      select: { id: true, code: true, name: true },
+    }),
     prisma.trainingAssignment.findMany({
-      include: {
+      select: {
+        id: true,
+        status: true,
+        dueAt: true,
+        completedAt: true,
         student: {
           select: {
             dni: true,
             firstName: true,
             lastName: true,
-            sede: { select: { name: true } },
           },
         },
         training: {
           select: { title: true, room: { select: { name: true, slug: true } } },
         },
         cell: {
-          include: {
+          select: {
             sede: { select: { id: true, code: true, name: true } },
             puesto: { select: { name: true } },
             tarea: { select: { name: true } },
@@ -601,14 +676,28 @@ export async function getProgressKpis() {
     });
   }
 
+  let completed = 0;
+  let expired = 0;
+  let dueSoon = 0;
+  let pending = 0;
+
   for (const row of classified) {
     const current = bySede.get(row.cell.sede.id);
     if (!current) continue;
     current.assigned += 1;
-    if (row.bucket === "completed") current.completed += 1;
-    if (row.bucket === "expired") current.expired += 1;
-    if (row.bucket === "due_soon") current.dueSoon += 1;
-    if (row.bucket === "pending") current.pending += 1;
+    if (row.bucket === "completed") {
+      current.completed += 1;
+      completed += 1;
+    } else if (row.bucket === "expired") {
+      current.expired += 1;
+      expired += 1;
+    } else if (row.bucket === "due_soon") {
+      current.dueSoon += 1;
+      dueSoon += 1;
+    } else if (row.bucket === "pending") {
+      current.pending += 1;
+      pending += 1;
+    }
   }
 
   const sedeRows = [...bySede.values()].map((row) => ({
@@ -617,10 +706,6 @@ export async function getProgressKpis() {
   }));
 
   const assigned = classified.length;
-  const completed = classified.filter((r) => r.bucket === "completed").length;
-  const expired = classified.filter((r) => r.bucket === "expired").length;
-  const dueSoon = classified.filter((r) => r.bucket === "due_soon").length;
-  const pending = classified.filter((r) => r.bucket === "pending").length;
 
   return {
     year: published?.year ?? null,

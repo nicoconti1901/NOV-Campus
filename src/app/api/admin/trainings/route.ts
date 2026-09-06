@@ -16,22 +16,16 @@ export async function GET() {
     return unauthorized();
   }
 
+  // Listado liviano (MatrixManager / selects). El detalle completo va por /api/admin/trainings/[id].
   const trainings = await prisma.training.findMany({
-    include: {
-      room: true,
-      materials: { orderBy: { sortOrder: "asc" } },
-      questions: {
-        orderBy: { sortOrder: "asc" },
-        include: { options: true },
-      },
+    select: {
+      id: true,
+      title: true,
+      published: true,
+      validityDays: true,
+      updatedAt: true,
+      room: { select: { id: true, slug: true, name: true } },
       _count: { select: { progress: true, assignments: true } },
-      scopes: {
-        include: {
-          sede: true,
-          puesto: true,
-          tarea: true,
-        },
-      },
     },
     orderBy: { updatedAt: "desc" },
   });

@@ -206,6 +206,9 @@ model TrainingAssignment {
   updatedAt        DateTime     @updatedAt
 
   @@unique([studentId, trainingId, matrixId])
+  @@index([studentId, status])
+  @@index([dueAt, status])
+  @@index([status, dueAt])
 }
 
 model TrainingProgress {

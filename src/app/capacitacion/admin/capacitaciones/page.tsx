@@ -19,18 +19,35 @@ export default async function AdminTrainingsPage({
   await requireAdminPage();
   const { sala } = await searchParams;
 
-  const rooms = await prisma.room.findMany({
-    include: {
-      trainings: {
-        include: {
-          _count: { select: { progress: true } },
-          progress: { select: { status: true } },
+  const [rooms, progressGroups] = await Promise.all([
+    prisma.room.findMany({
+      include: {
+        trainings: {
+          select: {
+            id: true,
+            title: true,
+            published: true,
+            minPassScore: true,
+            updatedAt: true,
+            _count: { select: { progress: true } },
+          },
+          orderBy: { updatedAt: "desc" },
         },
-        orderBy: { updatedAt: "desc" },
       },
-    },
-    orderBy: { name: "asc" },
-  });
+      orderBy: { name: "asc" },
+    }),
+    prisma.trainingProgress.groupBy({
+      by: ["trainingId", "status"],
+      _count: { _all: true },
+    }),
+  ]);
+
+  const progressByTraining = new Map<string, Record<string, number>>();
+  for (const row of progressGroups) {
+    const current = progressByTraining.get(row.trainingId) ?? {};
+    current[row.status] = row._count._all;
+    progressByTraining.set(row.trainingId, current);
+  }
 
   const filteredRooms = sala ? rooms.filter((r) => r.slug === sala) : rooms;
   const totalTrainings = rooms.reduce((acc, r) => acc + r.trainings.length, 0);
@@ -93,17 +110,16 @@ export default async function AdminTrainingsPage({
         {filteredRooms.map((room) => {
           const theme = getRoomTheme(room.slug);
           const Icon = theme.icon;
-          const completed = room.trainings.reduce(
-            (acc, t) =>
-              acc + t.progress.filter((p) => p.status === PROGRESS_STATUS.COMPLETED).length,
-            0
+          const roomStats = room.trainings.reduce(
+            (acc, t) => {
+              const counts = progressByTraining.get(t.id) ?? {};
+              acc.completed += counts[PROGRESS_STATUS.COMPLETED] ?? 0;
+              acc.inProgress += counts[PROGRESS_STATUS.IN_PROGRESS] ?? 0;
+              acc.total += t._count.progress;
+              return acc;
+            },
+            { completed: 0, inProgress: 0, total: 0 }
           );
-          const inProgress = room.trainings.reduce(
-            (acc, t) =>
-              acc + t.progress.filter((p) => p.status === PROGRESS_STATUS.IN_PROGRESS).length,
-            0
-          );
-          const totalProgress = room.trainings.reduce((acc, t) => acc + t.progress.length, 0);
 
           return (
             <section
@@ -134,12 +150,12 @@ export default async function AdminTrainingsPage({
                       </p>
                     </div>
                   </div>
-                  {totalProgress > 0 && (
+                  {roomStats.total > 0 && (
                     <div className="hidden rounded-2xl border border-rule bg-black/35 px-4 py-2 text-xs font-semibold text-ink sm:block">
                       <p>
-                        {completed} aprobados · {inProgress} en curso
+                        {roomStats.completed} aprobados · {roomStats.inProgress} en curso
                       </p>
-                      <p className="mt-0.5 text-ink-muted">{totalProgress} registros de progreso</p>
+                      <p className="mt-0.5 text-ink-muted">{roomStats.total} registros de progreso</p>
                     </div>
                   )}
                 </div>
@@ -161,16 +177,11 @@ export default async function AdminTrainingsPage({
                   </div>
                 ) : (
                   room.trainings.map((t) => {
-                    const done = t.progress.filter(
-                      (p) => p.status === PROGRESS_STATUS.COMPLETED
-                    ).length;
-                    const active = t.progress.filter(
-                      (p) => p.status === PROGRESS_STATUS.IN_PROGRESS
-                    ).length;
-                    const failed = t.progress.filter(
-                      (p) => p.status === PROGRESS_STATUS.FAILED
-                    ).length;
-                    const total = t.progress.length;
+                    const counts = progressByTraining.get(t.id) ?? {};
+                    const done = counts[PROGRESS_STATUS.COMPLETED] ?? 0;
+                    const active = counts[PROGRESS_STATUS.IN_PROGRESS] ?? 0;
+                    const failed = counts[PROGRESS_STATUS.FAILED] ?? 0;
+                    const total = t._count.progress;
                     const completionPct = total > 0 ? Math.round((done / total) * 100) : 0;
 
                     return (
